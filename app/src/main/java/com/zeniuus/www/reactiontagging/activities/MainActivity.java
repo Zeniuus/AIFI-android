@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
     static final int MY_PERMISSIONS_REQUEST_INTERNET = 0;
     static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    public static final String SERVER_URL = "http://172.30.1.16:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            strUrl = "http://143.248.197.157:3000/videos";
+            strUrl = SERVER_URL + "/videos";
         }
 
         @Override
@@ -171,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(String... params) {
             videoName = params[0];
-            strUrl = "http://143.248.197.157:3000/videos/" + videoName;
+            strUrl = SERVER_URL + "/videos/" + videoName;
 
             if (! new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video").exists())
                 new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video").mkdir();

@@ -1,7 +1,11 @@
 package com.zeniuus.www.reactiontagging.managers;
 
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.zeniuus.www.reactiontagging.activities.MainActivity;
+import com.zeniuus.www.reactiontagging.activities.VideoActivity;
 import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 
@@ -24,14 +28,16 @@ import io.socket.emitter.Emitter;
 public class FeedbackManager {
     ArrayList<Feedback> feedbacks;
     String videoName;
+    Context context;
     Socket mSocket;
 
-    public FeedbackManager(String videoName) {
+    public FeedbackManager(String videoName, Context context) {
         feedbacks = new ArrayList<>();
         this.videoName = videoName;
+        this.context = context;
 
         try {
-            mSocket = IO.socket("http://143.248.197.157:3000");
+            mSocket = IO.socket(MainActivity.SERVER_URL);
             mSocket.connect();
         } catch (Exception e) {
             Log.d("exception", e.toString());
@@ -66,7 +72,7 @@ public class FeedbackManager {
         });
 
         String result = new HttpRequestHandler("GET",
-                "http://143.248.197.157:3000/get_feedback/" + videoName,
+                MainActivity.SERVER_URL + "/get_feedback/" + videoName,
                 "")
                 .doHttpRequest();
         Log.d("server", "get feedback result: " + result);
@@ -115,8 +121,9 @@ public class FeedbackManager {
             jsonObject.accumulate("endTime", Integer.parseInt(endTime));
             jsonObject.accumulate("feedback", feedback);
 
-            String result = new HttpRequestHandler("POST", "http://143.248.197.157:3000/new_feedback/" + videoName, jsonObject.toString()).doHttpRequest();
+            String result = new HttpRequestHandler("POST", MainActivity.SERVER_URL + "/new_feedback/" + videoName, jsonObject.toString()).doHttpRequest();
             Log.d("server", "sending feedback result: " + result);
+            Toast.makeText(context, VideoActivity.milisecToMinSec(Integer.parseInt(startTime)) + " - " + feedback, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.d("exception", e.toString());
         }

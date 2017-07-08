@@ -11,8 +11,11 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -31,27 +34,34 @@ import org.w3c.dom.Text;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import static android.view.MotionEvent.ACTION_UP;
 import static java.lang.Thread.sleep;
 
 public class VideoActivity extends AppCompatActivity {
-
     VideoView videoView;
     Button button;
     ProgressBar progressBar;
     TextView title;
     TextView playTime;
-    TextView feedbackView;
+//    TextView feedbackView;
     TextView emojiLIKE;
     TextView emojiLOVE;
     TextView emojiHAHA;
     TextView emojiWOW;
     TextView emojiSAD;
     TextView emojiANGRY;
+    ListView suggestionFeedbackListView;
 
     FeedbackManager feedbackManager;
     EmojiFeedbackManager emojiFeedbackManager;
+
+    final static String[] SUGGESTION_FEEDBACK = {
+            "typo in slide",
+            "too fast",
+            "cannot understand"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +70,7 @@ public class VideoActivity extends AppCompatActivity {
 
         String videoName = getIntent().getStringExtra("video name");
 
-        feedbackManager = new FeedbackManager(videoName);
+        feedbackManager = new FeedbackManager(videoName, this);
         emojiFeedbackManager = new EmojiFeedbackManager(videoName);
 
         videoView = (VideoView) findViewById(R.id.video_view);
@@ -77,42 +87,38 @@ public class VideoActivity extends AppCompatActivity {
                     else {
                         videoView.start();
                         new ProgressController().execute();
-//                        new FeedbackController().execute();
                     }
                 }
 
                 return true;
             }
         });
-        videoView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                RelativeLayout videoLayout = (RelativeLayout) findViewById(R.id.video_layout);
-                videoLayout.getLayoutParams().width = videoView.getWidth();
-                videoLayout.getLayoutParams().height = videoView.getHeight();
-                Log.d("size", "videoView width: " + videoView.getWidth());
-            }
-        });
+//        videoView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                RelativeLayout videoLayout = (RelativeLayout) findViewById(R.id.video_layout);
+//                videoLayout.getLayoutParams().width = videoView.getWidth();
+//                videoLayout.getLayoutParams().height = videoView.getHeight();
+//                Log.d("size", "videoView width: " + videoView.getWidth());
+//            }
+//        });
 
         button = (Button) findViewById(R.id.feedback_submit_btn);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EditText startTime = (EditText) findViewById(R.id.start_time);
-                EditText endTime = (EditText) findViewById(R.id.end_time);
                 EditText feedback = (EditText) findViewById(R.id.feedback);
+                int startTime = videoView.getCurrentPosition();
 
                 int result;
                 if ((result = feedbackManager.addItem(
-                        startTime.getText().toString(),
-                        endTime.getText().toString(),
+                        Integer.toString(startTime),
+                        Integer.toString(startTime + 5000),
                         feedback.getText().toString())) == -1)
                     Toast.makeText(VideoActivity.this, "Please time integer value in start time & end time", Toast.LENGTH_SHORT).show();
                 else if (result == -2)
                     Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
                 else {
-                    startTime.setText("");
-                    endTime.setText("");
                     feedback.setText("");
                 }
             }
@@ -129,8 +135,8 @@ public class VideoActivity extends AppCompatActivity {
                     videoView.pause();
                     moveProgressBar(event);
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                    videoView.start();
-                    new ProgressController().execute();
+//                    videoView.start();
+//                    new ProgressController().execute();
                 }
 
                 return true;
@@ -143,7 +149,7 @@ public class VideoActivity extends AppCompatActivity {
         playTime = (TextView) findViewById(R.id.play_time);
         playTime.setText("0:00 / " + videoView.getDuration() / 60000 + ":" + (videoView.getDuration() % 60000) / 1000);
 
-        feedbackView = (TextView) findViewById(R.id.feedback_display);
+//        feedbackView = (TextView) findViewById(R.id.feedback_display);
 
         emojiLIKE = (TextView) findViewById(R.id.emoji_like);
         emojiLOVE = (TextView) findViewById(R.id.emoji_love);
@@ -189,26 +195,42 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
 
+        suggestionFeedbackListView = (ListView) findViewById(R.id.suggestion_feedback_list_view);
+        suggestionFeedbackListView.setAdapter(
+                new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, SUGGESTION_FEEDBACK)
+        );
+        suggestionFeedbackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String feedback = suggestionFeedbackListView.getItemAtPosition(position).toString();
+                int startTime = videoView.getCurrentPosition();
+                feedbackManager.addItem(
+                        Integer.toString(startTime),
+                        Integer.toString(startTime + 5000),
+                        feedback
+                );
+            }
+        });
     }
 
-    private void showFeedback(ArrayList<Feedback> feedbacks) {
-//        Log.d("function call", "showFeedback()");
-        String feedbackStr = "";
-        Iterator<Feedback> iter = feedbacks.iterator();
-
-        if (!iter.hasNext())
-            feedbackStr = "currently no feedback";
-        else {
-            while (iter.hasNext())
-                feedbackStr += iter.next().getFeedback() + '\n';
-
-            feedbackStr = feedbackStr.substring(0, feedbackStr.length() - 1);
-        }
-
-//        Log.d("data", "feedbackStr: " + feedbackStr);
-
-        feedbackView.setText(feedbackStr);
-    }
+//    private void showFeedback(ArrayList<Feedback> feedbacks) {
+////        Log.d("function call", "showFeedback()");
+//        String feedbackStr = "";
+//        Iterator<Feedback> iter = feedbacks.iterator();
+//
+//        if (!iter.hasNext())
+//            feedbackStr = "currently no feedback";
+//        else {
+//            while (iter.hasNext())
+//                feedbackStr += iter.next().getFeedback() + '\n';
+//
+//            feedbackStr = feedbackStr.substring(0, feedbackStr.length() - 1);
+//        }
+//
+////        Log.d("data", "feedbackStr: " + feedbackStr);
+//
+//        feedbackView.setText(feedbackStr);
+//    }
 
     private void showEmojiFeedback(int[] emojiCnt) {
         emojiLIKE.setText(" " + emojiCnt[0]);
@@ -253,13 +275,17 @@ public class VideoActivity extends AppCompatActivity {
             progressBar.setProgress((current * 100) / duration);
 //            Log.d("progress", "current progress : " + progressBar.getProgress());
 
-            showFeedback(feedbackManager.getFeedbacksAtTime(current));
+//            showFeedback(feedbackManager.getFeedbacksAtTime(current));
             showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
-            playTime.setText(current / 60000 + ":" + (current % 60000) / 1000 + " / " + videoView.getDuration() / 60000 + ":" + (videoView.getDuration() % 60000) / 1000);
+            playTime.setText(milisecToMinSec(current) + " / " + milisecToMinSec(videoView.getDuration()));
 
             if (!videoView.isPlaying() || progressBar.getProgress() >= 100)
                 isProgressRunning = false;
         }
+    }
+
+    public static String milisecToMinSec(int milisec) {
+        return milisec / 60000 + ":" + (milisec % 60000) / 1000;
     }
 
     private void moveProgressBar(MotionEvent event) {

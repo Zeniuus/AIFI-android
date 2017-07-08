@@ -2,6 +2,7 @@ package com.zeniuus.www.reactiontagging.managers;
 
 import android.util.Log;
 
+import com.zeniuus.www.reactiontagging.activities.MainActivity;
 import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.EmojiFeedback;
 import com.zeniuus.www.reactiontagging.types.Emoji;
@@ -32,7 +33,7 @@ public class EmojiFeedbackManager {
         this.videoName = videoName;
 
         try {
-            mSocket = IO.socket("http://143.248.197.157:3000");
+            mSocket = IO.socket(MainActivity.SERVER_URL);
             mSocket.connect();
         } catch (Exception e) {
             Log.d("exception", e.toString());
@@ -66,7 +67,7 @@ public class EmojiFeedbackManager {
         });
 
         String result = new HttpRequestHandler("GET",
-                "http://143.248.197.157:3000/get_emoji_feedback/" + videoName,
+                MainActivity.SERVER_URL + "/get_emoji_feedback/" + videoName,
                 "")
                 .doHttpRequest();
         Log.d("server", "get emoji feedback result: " + result);
@@ -105,7 +106,7 @@ public class EmojiFeedbackManager {
             jsonObject.accumulate("emoji", emoji.ordinal());
 
             String result = new HttpRequestHandler("POST",
-                    "http://143.248.197.157:3000/new_emoji_feedback/" + videoName,
+                    MainActivity.SERVER_URL + "/new_emoji_feedback/" + videoName,
                     jsonObject.toString())
                     .doHttpRequest();
             Log.d("server", "sending emoji feedback result: " + result);
