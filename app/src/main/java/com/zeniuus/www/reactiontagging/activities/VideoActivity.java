@@ -44,8 +44,9 @@ import static java.lang.Thread.sleep;
 
 public class VideoActivity extends AppCompatActivity {
     VideoView videoView;
-    Button button;
     ProgressBar progressBar;
+    EditText feedbackInput;
+    Button button;
     TextView title;
     TextView playTime;
 //    TextView feedbackView;
@@ -61,9 +62,12 @@ public class VideoActivity extends AppCompatActivity {
     EmojiFeedbackManager emojiFeedbackManager;
 
     final static String[] SUGGESTION_FEEDBACK = {
-            "typo in slide",
+            "need more description",
+            "weak connection",
+            "no reference",
+            "lack of visual aids",
             "too fast",
-            "cannot understand"
+            "typo in slide"
     };
 
     @Override
@@ -132,23 +136,29 @@ public class VideoActivity extends AppCompatActivity {
 //            }
 //        });
 
+        feedbackInput = (EditText) findViewById(R.id.feedback);
+        feedbackInput.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                videoView.pause();
+            }
+        });
+
         button = (Button) findViewById(R.id.feedback_submit_btn);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EditText feedback = (EditText) findViewById(R.id.feedback);
                 int startTime = videoView.getCurrentPosition();
 
-                int result;
-                if ((result = feedbackManager.addItem(
+                if (feedbackManager.addItem(
                         Integer.toString(startTime),
                         Integer.toString(startTime + 5000),
-                        feedback.getText().toString())) == -1)
-                    Toast.makeText(VideoActivity.this, "Please time integer value in start time & end time", Toast.LENGTH_SHORT).show();
-                else if (result == -2)
+                        feedbackInput.getText().toString()) == -2)
                     Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
                 else {
-                    feedback.setText("");
+                    feedbackInput.setText("");
+                    videoView.start();
+                    new ProgressController().execute();
                 }
             }
         });
