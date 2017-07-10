@@ -44,6 +44,7 @@ import static java.lang.Thread.sleep;
 
 public class VideoActivity extends AppCompatActivity {
     VideoView videoView;
+    TextView pauseText;
     ProgressBar progressBar;
     EditText feedbackInput;
     Button button;
@@ -116,9 +117,9 @@ public class VideoActivity extends AppCompatActivity {
                         && event.getY() >= 0
                         && event.getX() <= videoView.getWidth()
                         && event.getY() <= videoView.getHeight()) {
-                    if (videoView.isPlaying()) videoView.pause();
+                    if (videoView.isPlaying()) pauseVideo();
                     else {
-                        videoView.start();
+                        startVideo();
                         new ProgressController().execute();
                     }
                 }
@@ -136,12 +137,14 @@ public class VideoActivity extends AppCompatActivity {
 //            }
 //        });
 
+        pauseText = (TextView) findViewById(R.id.pause_text);
+
         feedbackInput = (EditText) findViewById(R.id.feedback);
         feedbackInput.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_UP)
-                    videoView.pause();
+                    pauseVideo();
                 return false;
             }
         });
@@ -159,7 +162,7 @@ public class VideoActivity extends AppCompatActivity {
                     Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
                 else {
                     feedbackInput.setText("");
-                    videoView.start();
+                    startVideo();
                     new ProgressController().execute();
                 }
             }
@@ -173,10 +176,10 @@ public class VideoActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN
                         || event.getAction() == MotionEvent.ACTION_MOVE) {
-                    videoView.pause();
+                    pauseVideo();
                     moveProgressBar(event);
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
-//                    videoView.start();
+//                    startVideo();
 //                    new ProgressController().execute();
                 }
 
@@ -281,6 +284,16 @@ public class VideoActivity extends AppCompatActivity {
         emojiSAD.setText(" " + emojiCnt[4]);
         emojiANGRY.setText(" " + emojiCnt[5]);
 
+    }
+
+    private void pauseVideo() {
+        videoView.pause();
+        pauseText.setVisibility(View.VISIBLE);
+    }
+
+    private void startVideo() {
+        videoView.start();
+        pauseText.setVisibility(View.INVISIBLE);
     }
 
     private class ProgressController extends AsyncTask<Void, Void, Void> {
