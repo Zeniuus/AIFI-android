@@ -2,8 +2,10 @@ package com.zeniuus.www.reactiontagging.activities;
 
 import android.Manifest;
 import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -17,11 +19,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.zeniuus.www.reactiontagging.R;
 
 import org.json.JSONArray;
+import org.w3c.dom.Text;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -34,6 +39,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
+import static java.lang.Thread.sleep;
+
 /**
  * Created by zeniuus on 2017. 7. 4..
  */
@@ -41,9 +48,16 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
     ListView listView;
     ArrayAdapter listViewAdapter;
+    LinearLayout downloadingLayout;
+    TextView downloadingText;
+    BroadcastReceiver onComplete;
+    AdapterView.OnItemClickListener onItemClickListener;
+
+    String downloadingVideoName;
 
     static final int MY_PERMISSIONS_REQUEST_INTERNET = 0;
     static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    public static final String SERVER_URL = "http://emma.kaist.ac.kr:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +67,7 @@ public class MainActivity extends AppCompatActivity {
         requestPermissionsForApp();
 
         listView = (ListView) findViewById(R.id.video_listview);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        onItemClickListener = new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String videoName = listView.getItemAtPosition(position).toString();
@@ -68,7 +81,24 @@ public class MainActivity extends AppCompatActivity {
                     new DownloadVideo().execute(videoName);
                 }
             }
-        });
+        };
+        listView.setOnItemClickListener(onItemClickListener);
+
+        downloadingLayout = (LinearLayout) findViewById(R.id.downloading_layout);
+
+        onComplete = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                downloadingLayout.setVisibility(View.INVISIBLE);
+                Intent videoIntent = new Intent(MainActivity.this, VideoActivity.class);
+                videoIntent.putExtra("video name", downloadingVideoName);
+                startActivity(videoIntent);
+            }
+        };
+        registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+
+        downloadingText = (TextView) findViewById(R.id.downloading_text);
+
     }
 
     public void requestPermissionsForApp() {
@@ -112,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            strUrl = "http://143.248.197.157:3000/videos";
+            strUrl = SERVER_URL + "/videos";
         }
 
         @Override
@@ -167,11 +197,21 @@ public class MainActivity extends AppCompatActivity {
     private class DownloadVideo extends AsyncTask<String, Void, Void> {
         String videoName;
         String strUrl;
+        boolean isDownloading = false;
+        int downloadRepeater = 0;
+
+        @Override
+        protected void onPreExecute() {
+            downloadingLayout.setVisibility(View.VISIBLE);
+            isDownloading = true;
+            listView.setOnItemClickListener(null);
+        }
 
         @Override
         protected Void doInBackground(String... params) {
             videoName = params[0];
-            strUrl = "http://143.248.197.157:3000/videos/" + videoName;
+            downloadingVideoName = params[0];
+            strUrl = SERVER_URL + "/videos/" + videoName;
 
             if (! new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video").exists())
                 new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video").mkdir();
@@ -183,14 +223,32 @@ public class MainActivity extends AppCompatActivity {
             request.setDestinationUri(Uri.fromFile(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video", videoName)));
             Long reference = downloadManager.enqueue(request);
 
+            do {
+                publishProgress();
+                try {
+                    sleep(300);
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            } while (isDownloading);
+
             return null;
         }
 
         @Override
-        protected void onPostExecute(Void param) {
-//            Intent intent = new Intent(MainActivity.this, VideoActivity.class);
-//            intent.putExtra("video name", videoName);
-//            startActivity(intent);
+        protected void onProgressUpdate(Void... params) {
+            String newText = "Downloading.";
+            for (int i = 0; i < downloadRepeater; i++) {
+                newText += ".";
+            }
+            downloadingText.setText(newText);
+
+            downloadRepeater = (downloadRepeater + 1) % 3;
+
+            if (downloadingLayout.getVisibility() == View.INVISIBLE) {
+                isDownloading = false;
+                listView.setOnItemClickListener(onItemClickListener);
+            }
         }
     }
 }
