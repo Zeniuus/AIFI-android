@@ -137,10 +137,12 @@ public class VideoActivity extends AppCompatActivity {
 //        });
 
         feedbackInput = (EditText) findViewById(R.id.feedback);
-        feedbackInput.setOnClickListener(new View.OnClickListener() {
+        feedbackInput.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                videoView.pause();
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP)
+                    videoView.pause();
+                return false;
             }
         });
 
