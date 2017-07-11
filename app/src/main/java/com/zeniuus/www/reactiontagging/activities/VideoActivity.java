@@ -60,7 +60,7 @@ public class VideoActivity extends AppCompatActivity {
     ListView suggestionFeedbackListView;
 
     FeedbackManager feedbackManager;
-    EmojiFeedbackManager emojiFeedbackManager;
+    public EmojiFeedbackManager emojiFeedbackManager;
 
     final static String[] SUGGESTION_FEEDBACK = {
             "need more description",
@@ -105,7 +105,7 @@ public class VideoActivity extends AppCompatActivity {
         String videoName = getIntent().getStringExtra("video name");
 
         feedbackManager = new FeedbackManager(videoName, this);
-        emojiFeedbackManager = new EmojiFeedbackManager(videoName);
+        emojiFeedbackManager = new EmojiFeedbackManager(videoName, this);
 
         videoView = (VideoView) findViewById(R.id.video_view);
         videoView.setVideoPath(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video" + File.separator + videoName);
@@ -276,14 +276,13 @@ public class VideoActivity extends AppCompatActivity {
 //        feedbackView.setText(feedbackStr);
 //    }
 
-    private void showEmojiFeedback(int[] emojiCnt) {
+    public void showEmojiFeedback(int[] emojiCnt) {
         emojiLIKE.setText(" " + emojiCnt[0]);
         emojiLOVE.setText(" " + emojiCnt[1]);
         emojiHAHA.setText(" " + emojiCnt[2]);
         emojiWOW.setText(" " + emojiCnt[3]);
         emojiSAD.setText(" " + emojiCnt[4]);
         emojiANGRY.setText(" " + emojiCnt[5]);
-
     }
 
     private void pauseVideo() {
@@ -340,6 +339,20 @@ public class VideoActivity extends AppCompatActivity {
 
     public static String milisecToMinSec(int milisec) {
         return milisec / 60000 + ":" + (milisec % 60000) / 1000;
+    }
+
+    public void refreshEmojiFeedback() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(videoView.getCurrentPosition()));
+                    }
+                });
+            }
+        }).start();
     }
 
     private void moveProgressBar(MotionEvent event) {

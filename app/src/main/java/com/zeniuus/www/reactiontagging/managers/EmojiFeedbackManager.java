@@ -1,8 +1,10 @@
 package com.zeniuus.www.reactiontagging.managers;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.zeniuus.www.reactiontagging.activities.MainActivity;
+import com.zeniuus.www.reactiontagging.activities.VideoActivity;
 import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.EmojiFeedback;
 import com.zeniuus.www.reactiontagging.types.Emoji;
@@ -26,11 +28,13 @@ import io.socket.emitter.Emitter;
 public class EmojiFeedbackManager {
     ArrayList<EmojiFeedback> feedbacks;
     String videoName;
+    Context context;
     Socket mSocket;
 
-    public EmojiFeedbackManager(String videoName) {
+    public EmojiFeedbackManager(String videoName, Context context) {
         feedbacks = new ArrayList<>();
         this.videoName = videoName;
+        this.context = context;
 
         try {
             mSocket = IO.socket(MainActivity.SERVER_URL);
@@ -38,6 +42,8 @@ public class EmojiFeedbackManager {
         } catch (Exception e) {
             Log.d("exception", e.toString());
         }
+
+        final VideoActivity videoActivity = (VideoActivity) context;
 
         mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
             @Override
@@ -60,6 +66,7 @@ public class EmojiFeedbackManager {
                     );
                     feedbacks.add(emojiFeedback);
                     Collections.sort(feedbacks, mComparator);
+                    videoActivity.refreshEmojiFeedback();
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -110,6 +117,7 @@ public class EmojiFeedbackManager {
                     jsonObject.toString())
                     .doHttpRequest();
             Log.d("server", "sending emoji feedback result: " + result);
+
         } catch (Exception e) {
             Log.d("exception", e.toString());
         }
