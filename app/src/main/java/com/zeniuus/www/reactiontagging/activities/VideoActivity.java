@@ -360,6 +360,7 @@ public class VideoActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 100) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
+        playTime.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
         Log.d("width", Integer.toString(width));
         Log.d("x", Float.toString(x));
         Log.d("set progress", Integer.toString((int)((x * 100) / width)));
