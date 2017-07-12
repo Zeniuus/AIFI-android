@@ -28,12 +28,14 @@ import io.socket.emitter.Emitter;
 public class FeedbackManager {
     ArrayList<Feedback> feedbacks;
     String videoName;
+    String userId;
     Context context;
     Socket mSocket;
 
-    public FeedbackManager(String videoName, Context context) {
+    public FeedbackManager(String videoName, String userId, Context context) {
         feedbacks = new ArrayList<>();
         this.videoName = videoName;
+        this.userId = userId;
         this.context = context;
 
         try {
@@ -59,6 +61,7 @@ public class FeedbackManager {
                 Log.d("socket", "feedback addition");
                 try {
                     Feedback feedback = new Feedback(
+                            ((JSONObject) args[0]).getString("userId"),
                             ((JSONObject) args[0]).getInt("startTime") + "",
                             ((JSONObject) args[0]).getInt("endTime") + "",
                             ((JSONObject) args[0]).getString("feedback")
@@ -81,6 +84,7 @@ public class FeedbackManager {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 Feedback feedback = new Feedback(
+                        jsonObject.getString("userId"),
                         jsonObject.getInt("startTime") + "",
                         jsonObject.getInt("endTime") + "",
                         jsonObject.getString("feedback"));
@@ -117,6 +121,7 @@ public class FeedbackManager {
 
         try {
             JSONObject jsonObject = new JSONObject();
+            jsonObject.accumulate("userId", userId);
             jsonObject.accumulate("startTime", Integer.parseInt(startTime));
             jsonObject.accumulate("endTime", Integer.parseInt(endTime));
             jsonObject.accumulate("feedback", feedback);
@@ -142,6 +147,19 @@ public class FeedbackManager {
         }
 
         return currFeedbacks;
+    }
+
+    public ArrayList<Feedback> getFeedbacksOfPerson(String userId) {
+        ArrayList<Feedback> onesFeedback = new ArrayList<>();
+        Iterator<Feedback> iter = feedbacks.iterator();
+
+        while (iter.hasNext()) {
+            Feedback feedback = iter.next();
+            if (feedback.getUserId().compareTo(userId) == 0)
+                onesFeedback.add(feedback);
+        }
+
+        return onesFeedback;
     }
 
     private final static Comparator<Feedback> mComparator = new Comparator<Feedback>() {

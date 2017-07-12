@@ -67,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
         requestPermissionsForApp();
 
+        final String userId = getIntent().getStringExtra("userId");
+
         listView = (ListView) findViewById(R.id.video_listview);
         onItemClickListener = new AdapterView.OnItemClickListener() {
             @Override
@@ -76,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("flow", "flow if");
                     Intent intent = new Intent(MainActivity.this, VideoActivity.class);
                     intent.putExtra("video name", videoName);
+                    intent.putExtra("userId", userId);
                     startActivity(intent);
                 } else {
                     Log.d("flow", "flow else / video name: " + videoName);
@@ -93,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 downloadingLayout.setVisibility(View.INVISIBLE);
                 Intent videoIntent = new Intent(MainActivity.this, VideoActivity.class);
                 videoIntent.putExtra("video name", downloadingVideoName);
+                videoIntent.putExtra("userId", userId);
                 startActivity(videoIntent);
             }
         };

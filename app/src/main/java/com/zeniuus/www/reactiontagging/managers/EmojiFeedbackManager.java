@@ -28,12 +28,14 @@ import io.socket.emitter.Emitter;
 public class EmojiFeedbackManager {
     ArrayList<EmojiFeedback> feedbacks;
     String videoName;
+    String userId;
     Context context;
     Socket mSocket;
 
-    public EmojiFeedbackManager(String videoName, Context context) {
+    public EmojiFeedbackManager(String videoName, String userId, Context context) {
         feedbacks = new ArrayList<>();
         this.videoName = videoName;
+        this.userId = userId;
         this.context = context;
 
         try {
@@ -61,6 +63,7 @@ public class EmojiFeedbackManager {
                 Log.d("socket", "emoji feedback addition");
                 try {
                     EmojiFeedback emojiFeedback = new EmojiFeedback(
+                            ((JSONObject) args[0]).getString("userId"),
                             ((JSONObject) args[0]).getInt("startTime"),
                             Emoji.values()[((JSONObject) args[0]).getInt("emoji")]
                     );
@@ -83,6 +86,7 @@ public class EmojiFeedbackManager {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 EmojiFeedback emojiFeedback = new EmojiFeedback(
+                        jsonObject.getString("userId"),
                         jsonObject.getInt("startTime"),
                         Emoji.values()[jsonObject.getInt("emoji")]);
                 feedbacks.add(emojiFeedback);
@@ -109,6 +113,7 @@ public class EmojiFeedbackManager {
 
         try {
             JSONObject jsonObject = new JSONObject();
+            jsonObject.accumulate("userId", userId);
             jsonObject.accumulate("startTime", startTime);
             jsonObject.accumulate("emoji", emoji.ordinal());
 

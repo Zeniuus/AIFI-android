@@ -2,25 +2,33 @@ package com.zeniuus.www.reactiontagging.objects;
 
 import android.util.Log;
 
+import com.zeniuus.www.reactiontagging.activities.VideoActivity;
+
 /**
  * Created by zeniuus on 2017. 6. 30..
  */
 
 public class Feedback {
-    int start_time;
-    int end_time;
-    String feedback;
+    private String userId;
+    private int startTime;
+    private int endTime;
+    private String feedback;
 
-    public Feedback(String start_time, String end_time, String feedback) {
-        this.start_time = Integer.parseInt(start_time);
-        this.end_time = Integer.parseInt(end_time);
+    public Feedback(String userId, String start_time, String end_time, String feedback) {
+        this.userId = userId;
+        this.startTime = Integer.parseInt(start_time);
+        this.endTime = Integer.parseInt(end_time);
         this.feedback = feedback;
         Log.d("feedback", "feedback well created");
     }
 
-    public int getStartTime() { return start_time; }
+    public String getUserId() { return userId; }
 
-    public int getEndTime() { return end_time; }
+    public int getStartTime() { return startTime; }
+
+    public int getEndTime() { return endTime; }
 
     public String getFeedback() { return feedback; }
+
+    public String toString() { return VideoActivity.milisecToMinSec(startTime) + " - " + feedback; }
 }

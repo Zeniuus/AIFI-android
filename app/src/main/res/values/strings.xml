@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">HYFBABP</string>
+    <string name="open_drawer">Your Feedback</string>
+    <string name="close_drawer">Close Drawer</string>
 </resources>

@@ -7,13 +7,17 @@ import com.zeniuus.www.reactiontagging.types.Emoji;
  */
 
 public class EmojiFeedback {
+    private String userId;
     private int startTime;
     private Emoji emojiType;
 
-    public EmojiFeedback(int startTime, Emoji emojiType) {
+    public EmojiFeedback(String userId, int startTime, Emoji emojiType) {
+        this.userId = userId;
         this.startTime = startTime;
         this.emojiType = emojiType;
     }
+
+    public String getUserId() { return userId; }
 
     public int getStartTime() { return startTime; }
 

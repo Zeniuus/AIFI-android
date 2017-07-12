@@ -6,6 +6,8 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -58,9 +60,17 @@ public class VideoActivity extends AppCompatActivity {
     TextView emojiSAD;
     TextView emojiANGRY;
     ListView suggestionFeedbackListView;
+    ListView feedbackHistoryList;
+    DrawerLayout drawerLayout;
+    ActionBarDrawerToggle actionBarDrawerToggle;
+    ArrayAdapter arrayAdapter;
 
     FeedbackManager feedbackManager;
     public EmojiFeedbackManager emojiFeedbackManager;
+    String videoName;
+    String userId;
+    ArrayList<String> myFeedback;
+
 
     final static String[] SUGGESTION_FEEDBACK = {
             "need more description",
@@ -102,10 +112,11 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
 
-        String videoName = getIntent().getStringExtra("video name");
+        videoName = getIntent().getStringExtra("video name");
+        userId = getIntent().getStringExtra("userId");
 
-        feedbackManager = new FeedbackManager(videoName, this);
-        emojiFeedbackManager = new EmojiFeedbackManager(videoName, this);
+        feedbackManager = new FeedbackManager(videoName, userId, this);
+        emojiFeedbackManager = new EmojiFeedbackManager(videoName, userId, this);
 
         videoView = (VideoView) findViewById(R.id.video_view);
         videoView.setVideoPath(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video" + File.separator + videoName);
@@ -162,7 +173,6 @@ public class VideoActivity extends AppCompatActivity {
                     Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
                 else {
                     feedbackInput.setText("");
-                    startVideo();
                     new ProgressController().execute();
                 }
             }
@@ -255,6 +265,35 @@ public class VideoActivity extends AppCompatActivity {
                 );
             }
         });
+
+        feedbackHistoryList = (ListView) findViewById(R.id.feedback_history_list);
+        myFeedback = new ArrayList<>();
+        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, myFeedback);
+        feedbackHistoryList.setAdapter(arrayAdapter);
+//        feedbackHistoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                Log.d("listview", "clicked : " + position);
+//            }
+//        });
+
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout,
+                R.string.open_drawer, R.string.close_drawer) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                Log.d("drawer layout", "closed");
+                super.onDrawerClosed(drawerView);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                Log.d("drawer layout", "opened");
+                super.onDrawerOpened(drawerView);
+                pauseVideo();
+            }
+        };
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
     }
 
 //    private void showFeedback(ArrayList<Feedback> feedbacks) {
@@ -283,6 +322,17 @@ public class VideoActivity extends AppCompatActivity {
         emojiWOW.setText(" " + emojiCnt[3]);
         emojiSAD.setText(" " + emojiCnt[4]);
         emojiANGRY.setText(" " + emojiCnt[5]);
+    }
+
+    public void updateMyFeedback() {
+        Iterator<Feedback> iter = feedbackManager.getFeedbacksOfPerson(userId).iterator();
+
+        myFeedback.clear();
+        while (iter.hasNext()) {
+            myFeedback.add(iter.next().toString());
+        }
+
+        arrayAdapter.notifyDataSetChanged();
     }
 
     private void pauseVideo() {
@@ -323,13 +373,14 @@ public class VideoActivity extends AppCompatActivity {
         @Override
         public void onProgressUpdate(Void... params) {
             current = videoView.getCurrentPosition();
-//            Log.d("progress", "current : " + current);
-//            Log.d("progress", "duration : " + duration);
+            Log.d("progress", "current : " + current);
+            Log.d("progress", "duration : " + duration);
             progressBar.setProgress((current * 100) / duration);
-//            Log.d("progress", "current progress : " + progressBar.getProgress());
+            Log.d("progress", "current progress : " + progressBar.getProgress());
 
 //            showFeedback(feedbackManager.getFeedbacksAtTime(current));
             showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
+            updateMyFeedback();
             playTime.setText(milisecToMinSec(current) + " / " + milisecToMinSec(videoView.getDuration()));
 
             if (!videoView.isPlaying() || progressBar.getProgress() >= 100)
