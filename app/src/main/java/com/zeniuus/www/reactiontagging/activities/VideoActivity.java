@@ -1,5 +1,6 @@
 package com.zeniuus.www.reactiontagging.activities;
 
+import android.content.DialogInterface;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
@@ -8,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -28,12 +30,15 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.zeniuus.www.reactiontagging.R;
+import com.zeniuus.www.reactiontagging.adapters.FeedbackHistoryAdapter;
 import com.zeniuus.www.reactiontagging.managers.EmojiFeedbackManager;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
+import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.EmojiFeedback;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 import com.zeniuus.www.reactiontagging.types.Emoji;
 
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.File;
@@ -63,13 +68,13 @@ public class VideoActivity extends AppCompatActivity {
     ListView feedbackHistoryList;
     DrawerLayout drawerLayout;
     ActionBarDrawerToggle actionBarDrawerToggle;
-    ArrayAdapter arrayAdapter;
+    FeedbackHistoryAdapter mAdapter;
 
     FeedbackManager feedbackManager;
     public EmojiFeedbackManager emojiFeedbackManager;
     String videoName;
     String userId;
-    ArrayList<String> myFeedback;
+    ArrayList<Feedback> myFeedback;
 
 
     final static String[] SUGGESTION_FEEDBACK = {
@@ -268,14 +273,59 @@ public class VideoActivity extends AppCompatActivity {
 
         feedbackHistoryList = (ListView) findViewById(R.id.feedback_history_list);
         myFeedback = new ArrayList<>();
-        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, myFeedback);
-        feedbackHistoryList.setAdapter(arrayAdapter);
+        mAdapter = new FeedbackHistoryAdapter(this, android.R.layout.simple_list_item_1, myFeedback);
+        feedbackHistoryList.setAdapter(mAdapter);
 //        feedbackHistoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 //            @Override
 //            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 //                Log.d("listview", "clicked : " + position);
 //            }
 //        });
+
+        feedbackHistoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                Log.d("feedback history list", "item clicked: " + position);
+                String feedback = feedbackHistoryList.getItemAtPosition(position).toString();
+                // Use the Builder class for convenient dialog construction
+                AlertDialog.Builder builder = new AlertDialog.Builder(VideoActivity.this);
+                builder.setMessage("Are you sure to delete the following feedback?\n" + feedback)
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                Feedback targetFeedback = mAdapter.getItem(position);
+                                mAdapter.remove(targetFeedback);
+                                feedbackManager.remove(targetFeedback);
+                                mAdapter.notifyDataSetChanged();
+                                try {
+                                    JSONObject jsonObject = new JSONObject();
+                                    jsonObject.accumulate("videoName", videoName);
+                                    jsonObject.accumulate("userId", targetFeedback.getUserId());
+                                    jsonObject.accumulate("startTime", targetFeedback.getStartTime());
+                                    jsonObject.accumulate("endTime", targetFeedback.getEndTime());
+                                    jsonObject.accumulate("feedback", targetFeedback.getFeedback());
+                                    String result = new HttpRequestHandler("POST",
+                                            MainActivity.SERVER_URL + "/delete_feedback",
+                                            jsonObject.toString()).doHttpRequest();
+                                    JSONObject jsonResult = new JSONObject(result);
+                                    if (!jsonResult.getBoolean("success")) {
+                                        // TODO: put target feedback again - mAdapter.addItem(targetFeedback);
+                                        Toast.makeText(VideoActivity.this, "Deletion falied in server...", Toast.LENGTH_SHORT).show();
+                                    }
+                                } catch (Exception e) {
+                                    Log.d("exception", e.toString());
+                                }
+
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // User cancelled the dialog
+                            }
+                        });
+
+                builder.create().show();
+            }
+        });
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout,
@@ -329,10 +379,10 @@ public class VideoActivity extends AppCompatActivity {
 
         myFeedback.clear();
         while (iter.hasNext()) {
-            myFeedback.add(iter.next().toString());
+            myFeedback.add(iter.next());
         }
 
-        arrayAdapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged();
     }
 
     private void pauseVideo() {

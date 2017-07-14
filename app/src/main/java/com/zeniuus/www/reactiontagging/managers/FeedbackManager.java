@@ -162,6 +162,20 @@ public class FeedbackManager {
         return onesFeedback;
     }
 
+    public void remove(Feedback feedback) {
+        Iterator<Feedback> iter = feedbacks.iterator();
+        while (iter.hasNext()) {
+            Feedback temp = iter.next();
+            if (temp.getUserId().compareTo(feedback.getUserId()) == 0
+                    && temp.getStartTime() == feedback.getStartTime()
+                    && temp.getEndTime() == feedback.getEndTime()
+                    && temp.getFeedback().compareTo(feedback.getFeedback()) == 0) {
+                feedbacks.remove(temp);
+                break;
+            }
+        }
+    }
+
     private final static Comparator<Feedback> mComparator = new Comparator<Feedback>() {
         @Override
         public int compare(Feedback o1, Feedback o2) {
