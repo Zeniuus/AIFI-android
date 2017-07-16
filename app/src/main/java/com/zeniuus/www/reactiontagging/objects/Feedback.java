@@ -59,5 +59,19 @@ public class Feedback {
         }
     }
 
+    public void giveLikeToThreadFeedback(int index, String userId) {
+        try {
+            JSONObject jsonObject = thread.getJSONObject(index);
+            JSONArray jsonArray = jsonObject.getJSONArray("like");
+            jsonArray.put(userId);
+            jsonObject.put("like", jsonArray);
+            thread.remove(index);
+            thread.put(index, jsonObject);
+            Log.d("json object", thread.toString());
+        } catch (Exception e) {
+            Log.d("exception", e.toString());
+        }
+    }
+
     public String toString() { return VideoActivity.milisecToMinSec(startTime) + " - " + feedback; }
 }

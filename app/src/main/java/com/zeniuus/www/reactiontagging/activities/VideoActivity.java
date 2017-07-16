@@ -648,7 +648,7 @@ public class VideoActivity extends AppCompatActivity {
             textView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    feedbackManager.giveLikeToThread(currThreadFeedback, pos);
+                    feedbackManager.giveLikeToThreadFeedback(currThreadFeedback, pos);
                 }
             });
             textView.setText(toString(pos));

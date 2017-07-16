@@ -128,6 +128,34 @@ public class FeedbackManager {
                     Log.d("exception", e.toString());
                 }
             }
+        }).on("thread feedback like", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Iterator<Feedback> iter = feedbacks.iterator();
+
+                try {
+                    Feedback feedback = new Feedback(
+                            ((JSONObject) args[0]).getString("userId"),
+                            ((JSONObject) args[0]).getInt("startTime") + "",
+                            ((JSONObject) args[0]).getInt("endTime") + "",
+                            ((JSONObject) args[0]).getString("feedback"),
+                            ((JSONObject) args[0]).getJSONArray("like"),
+                            null
+                    );
+
+                    while (iter.hasNext()) {
+                        Feedback temp = iter.next();
+                        if (isSame(temp, feedback)) {
+                            temp.giveLikeToThreadFeedback(
+                                    ((JSONObject) args[0]).getInt("threadIndex"),
+                                    ((JSONObject) args[0]).getString("likeUserId"));
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
         });
 
         String result = new HttpRequestHandler("GET",
@@ -246,7 +274,7 @@ public class FeedbackManager {
         }
     }
 
-    public void giveLikeToThread(Feedback feedback, int index) {
+    public void giveLikeToThreadFeedback(Feedback feedback, int index) {
         Iterator<Feedback> iter = feedbacks.iterator();
         while (iter.hasNext()) {
             Feedback temp = iter.next();
@@ -262,7 +290,7 @@ public class FeedbackManager {
                     jsonObject.accumulate("likeUserId", userId);
 
                     String result = new HttpRequestHandler
-                            ("POST", MainActivity.SERVER_URL + "/give_like_to_thread/" + videoName, jsonObject.toString())
+                            ("POST", MainActivity.SERVER_URL + "/give_like_to_thread_feedback/" + videoName, jsonObject.toString())
                             .doHttpRequest();
                     Log.d("server", "giving like to thread result: " + result);
                 } catch (Exception e) {
