@@ -4,6 +4,12 @@ import android.util.Log;
 
 import com.zeniuus.www.reactiontagging.activities.VideoActivity;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by zeniuus on 2017. 6. 30..
  */
@@ -13,12 +19,16 @@ public class Feedback {
     private int startTime;
     private int endTime;
     private String feedback;
+    private JSONArray like;
+    private JSONArray thread;
 
-    public Feedback(String userId, String start_time, String end_time, String feedback) {
+    public Feedback(String userId, String start_time, String end_time, String feedback, JSONArray like, JSONArray thread) {
         this.userId = userId;
         this.startTime = Integer.parseInt(start_time);
         this.endTime = Integer.parseInt(end_time);
         this.feedback = feedback;
+        this.like = like;
+        this.thread = thread;
         Log.d("feedback", "feedback well created");
     }
 
@@ -29,6 +39,25 @@ public class Feedback {
     public int getEndTime() { return endTime; }
 
     public String getFeedback() { return feedback; }
+
+    public JSONArray getLike() { return like; }
+
+    public void giveLike(String userId) { like.put(userId); }
+
+    public JSONArray getThread() { return thread; }
+
+    public void giveThreadFeedback(String userId, String feedback) {
+        try {
+            JSONObject threadFeedback = new JSONObject();
+            threadFeedback.accumulate("userId", userId);
+            threadFeedback.accumulate("feedback", feedback);
+            threadFeedback.accumulate("like", new JSONArray());
+
+            thread.put(threadFeedback);
+        } catch (Exception e) {
+            Log.d("exception", e.toString());
+        }
+    }
 
     public String toString() { return VideoActivity.milisecToMinSec(startTime) + " - " + feedback; }
 }

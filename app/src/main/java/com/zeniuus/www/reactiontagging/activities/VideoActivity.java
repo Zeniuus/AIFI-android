@@ -1,10 +1,10 @@
 package com.zeniuus.www.reactiontagging.activities;
 
+import android.app.Service;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.widget.DrawerLayout;
@@ -12,11 +12,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -24,22 +26,19 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.zeniuus.www.reactiontagging.R;
-import com.zeniuus.www.reactiontagging.adapters.FeedbackHistoryAdapter;
+import com.zeniuus.www.reactiontagging.helpers.SoftKeyboard;
 import com.zeniuus.www.reactiontagging.managers.EmojiFeedbackManager;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
 import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
-import com.zeniuus.www.reactiontagging.objects.EmojiFeedback;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 import com.zeniuus.www.reactiontagging.types.Emoji;
 
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,6 +49,7 @@ import static android.view.MotionEvent.ACTION_UP;
 import static java.lang.Thread.sleep;
 
 public class VideoActivity extends AppCompatActivity {
+    SoftKeyboard softKeyboard;
     VideoView videoView;
     TextView pauseText;
     ProgressBar progressBar;
@@ -64,58 +64,73 @@ public class VideoActivity extends AppCompatActivity {
     TextView emojiWOW;
     TextView emojiSAD;
     TextView emojiANGRY;
+    TextView givingThreadTo;
+    LinearLayout suggestionFeedbackLayout;
     ListView suggestionFeedbackListView;
+    LinearLayout threadLayout;
+    Button gobackBtn;
+    TextView selectedFeedback;
+    SuggestionFeedbackAdapter suggestionFeedbackAdapter;
     ListView feedbackHistoryList;
     DrawerLayout drawerLayout;
     ActionBarDrawerToggle actionBarDrawerToggle;
-    FeedbackHistoryAdapter mAdapter;
+    FeedbackHistoryAdapter feedbackHistoryAdapter;
 
     FeedbackManager feedbackManager;
     public EmojiFeedbackManager emojiFeedbackManager;
     String videoName;
     String userId;
+    ArrayList<Feedback> suggestionFeedback;
     ArrayList<Feedback> myFeedback;
+    boolean isThreadFeedback = false;
+    Feedback toWhichFeedback;
 
-
-    final static String[] SUGGESTION_FEEDBACK = {
-            "need more description",
-            "weak connection",
-            "no reference",
-            "lack of visual aids",
-            "too fast",
-            "typo in slide"
-    };
+//    final static String[] SUGGESTION_FEEDBACK = {
+//            "need more description",
+//            "weak connection",
+//            "no reference",
+//            "lack of visual aids",
+//            "too fast",
+//            "typo in slide"
+//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video);
 
-        final View contentView = this.findViewById(android.R.id.content);
+        softKeyboard = new SoftKeyboard
+                ((ViewGroup) findViewById(android.R.id.content), (InputMethodManager) getSystemService(Service.INPUT_METHOD_SERVICE));
+        softKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged()
+        {
 
-        contentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
-            public void onGlobalLayout() {
+            public void onSoftKeyboardHide()
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        suggestionFeedbackLayout.setVisibility(View.VISIBLE);
+                        isThreadFeedback = false;
+                        givingThreadTo.setVisibility(View.GONE);
+                    }
+                });
+            }
 
-                Rect r = new Rect();
-                contentView.getWindowVisibleDisplayFrame(r);
-                int screenHeight = contentView.getRootView().getHeight();
-
-                // r.bottom is the position above soft keypad or device button.
-                // if keypad is shown, the r.bottom is smaller than that before.
-                int keypadHeight = screenHeight - r.bottom;
-
-                Log.d("keypad height", "" + keypadHeight);
-
-                LinearLayout suggestionFeedbackLayout = (LinearLayout) findViewById(R.id.suggestion_feedback_layout);
-
-                if (keypadHeight > screenHeight * 0.15) { // 0.15 ratio is perhaps enough to determine keypad height.
-                    suggestionFeedbackLayout.setVisibility(View.GONE);
-                } else {
-                    suggestionFeedbackLayout.setVisibility(View.VISIBLE);
-                }
+            @Override
+            public void onSoftKeyboardShow()
+            {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        suggestionFeedbackLayout.setVisibility(View.GONE);
+                        if (isThreadFeedback)
+                            givingThreadTo.setVisibility(View.VISIBLE);
+                    }
+                });
             }
         });
+
+        final View contentView = this.findViewById(android.R.id.content);
 
         videoName = getIntent().getStringExtra("video name");
         userId = getIntent().getStringExtra("userId");
@@ -170,15 +185,24 @@ public class VideoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 int startTime = videoView.getCurrentPosition();
-
-                if (feedbackManager.addItem(
-                        Integer.toString(startTime),
-                        Integer.toString(startTime + 5000),
-                        feedbackInput.getText().toString()) == -2)
-                    Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
-                else {
+                if (!isThreadFeedback) {
+                    Log.d("event", "give a new feedback");
+                    if (feedbackManager.addItem(
+                            Integer.toString(startTime),
+                            Integer.toString(startTime + 5000),
+                            feedbackInput.getText().toString()) == -2)
+                        Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
+                    else {
+                        feedbackInput.setText("");
+                        softKeyboard.openSoftKeyboard();
+//                        new ProgressController().execute();
+                    }
+                } else {
+                    Log.d("event", "give a new thread feedback");
+                    feedbackManager.giveThreadFeedback(toWhichFeedback, userId, feedbackInput.getText().toString());
                     feedbackInput.setText("");
-                    new ProgressController().execute();
+                    softKeyboard.closeSoftKeyboard();
+//                    new ProgressController().execute();
                 }
             }
         });
@@ -254,27 +278,49 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
 
+        suggestionFeedbackLayout = (LinearLayout) findViewById(R.id.suggestion_feedback_layout);
+
+        givingThreadTo = (TextView) findViewById(R.id.feedback_giving_thread_to);
         suggestionFeedbackListView = (ListView) findViewById(R.id.suggestion_feedback_list_view);
-        suggestionFeedbackListView.setAdapter(
-                new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, SUGGESTION_FEEDBACK)
-        );
-        suggestionFeedbackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String feedback = suggestionFeedbackListView.getItemAtPosition(position).toString();
-                int startTime = videoView.getCurrentPosition();
-                feedbackManager.addItem(
-                        Integer.toString(startTime),
-                        Integer.toString(startTime + 5000),
-                        feedback
-                );
-            }
-        });
+        threadLayout = (LinearLayout) findViewById(R.id.thread_layout);
+        gobackBtn = (Button) findViewById(R.id.goback_btn);
+        selectedFeedback = (TextView) findViewById(R.id.selected_feedback);
+        suggestionFeedback = new ArrayList<>();
+        suggestionFeedbackAdapter = new SuggestionFeedbackAdapter
+                (this, android.R.layout.simple_list_item_1, suggestionFeedback);
+        suggestionFeedbackListView.setAdapter(suggestionFeedbackAdapter);
+//        suggestionFeedbackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+////                // give feedback on click
+////                String feedback = suggestionFeedbackListView.getItemAtPosition(position).toString();
+////                int startTime = videoView.getCurrentPosition();
+////                feedbackManager.addItem(
+////                        Integer.toString(startTime),
+////                        Integer.toString(startTime + 5000),
+////                        feedback
+////                );
+//                // give like to feedback on click
+//                feedbackManager.giveLikeToFeedback(suggestionFeedbackAdapter.getItem(position));
+//            }
+//        });
+//
+//        suggestionFeedbackListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+//                isThreadFeedback = true;
+//                InputMethodManager keyboard = (InputMethodManager)
+//                        getSystemService(Context.INPUT_METHOD_SERVICE);
+//                keyboard.showSoftInput(feedbackInput, 0);
+//                return false;
+//            }
+//        });
+
 
         feedbackHistoryList = (ListView) findViewById(R.id.feedback_history_list);
         myFeedback = new ArrayList<>();
-        mAdapter = new FeedbackHistoryAdapter(this, android.R.layout.simple_list_item_1, myFeedback);
-        feedbackHistoryList.setAdapter(mAdapter);
+        feedbackHistoryAdapter = new FeedbackHistoryAdapter(this, android.R.layout.simple_list_item_1, myFeedback);
+        feedbackHistoryList.setAdapter(feedbackHistoryAdapter);
 //        feedbackHistoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 //            @Override
 //            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -292,10 +338,10 @@ public class VideoActivity extends AppCompatActivity {
                 builder.setMessage("Are you sure to delete the following feedback?\n" + feedback)
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                Feedback targetFeedback = mAdapter.getItem(position);
-                                mAdapter.remove(targetFeedback);
+                                Feedback targetFeedback = feedbackHistoryAdapter.getItem(position);
+                                feedbackHistoryAdapter.remove(targetFeedback);
                                 feedbackManager.remove(targetFeedback);
-                                mAdapter.notifyDataSetChanged();
+                                feedbackHistoryAdapter.notifyDataSetChanged();
                                 try {
                                     JSONObject jsonObject = new JSONObject();
                                     jsonObject.accumulate("videoName", videoName);
@@ -308,7 +354,7 @@ public class VideoActivity extends AppCompatActivity {
                                             jsonObject.toString()).doHttpRequest();
                                     JSONObject jsonResult = new JSONObject(result);
                                     if (!jsonResult.getBoolean("success")) {
-                                        // TODO: put target feedback again - mAdapter.addItem(targetFeedback);
+                                        // TODO: put target feedback again - feedbackHistoryAdapter.addItem(targetFeedback);
                                         Toast.makeText(VideoActivity.this, "Deletion falied in server...", Toast.LENGTH_SHORT).show();
                                     }
                                 } catch (Exception e) {
@@ -346,24 +392,20 @@ public class VideoActivity extends AppCompatActivity {
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
     }
 
-//    private void showFeedback(ArrayList<Feedback> feedbacks) {
-////        Log.d("function call", "showFeedback()");
-//        String feedbackStr = "";
-//        Iterator<Feedback> iter = feedbacks.iterator();
-//
-//        if (!iter.hasNext())
-//            feedbackStr = "currently no feedback";
-//        else {
-//            while (iter.hasNext())
-//                feedbackStr += iter.next().getFeedback() + '\n';
-//
-//            feedbackStr = feedbackStr.substring(0, feedbackStr.length() - 1);
-//        }
-//
-////        Log.d("data", "feedbackStr: " + feedbackStr);
-//
-//        feedbackView.setText(feedbackStr);
-//    }
+    private void showFeedback(ArrayList<Feedback> feedbacks) {
+        suggestionFeedback.clear();
+
+        if (!isThreadFeedback) {
+            Iterator<Feedback> iter = feedbacks.iterator();
+            while (iter.hasNext()) {
+                suggestionFeedback.add(iter.next());
+            }
+        } else {
+            // TODO: fill suggestionFeedback with thread feedback
+        }
+
+        suggestionFeedbackAdapter.notifyDataSetChanged();
+    }
 
     public void showEmojiFeedback(int[] emojiCnt) {
         emojiLIKE.setText(" " + emojiCnt[0]);
@@ -382,7 +424,7 @@ public class VideoActivity extends AppCompatActivity {
             myFeedback.add(iter.next());
         }
 
-        mAdapter.notifyDataSetChanged();
+        feedbackHistoryAdapter.notifyDataSetChanged();
     }
 
     private void pauseVideo() {
@@ -428,7 +470,7 @@ public class VideoActivity extends AppCompatActivity {
             progressBar.setProgress((current * 100) / duration);
             Log.d("progress", "current progress : " + progressBar.getProgress());
 
-//            showFeedback(feedbackManager.getFeedbacksAtTime(current));
+            showFeedback(feedbackManager.getFeedbacksAtTime(current));
             showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
             updateMyFeedback();
             playTime.setText(milisecToMinSec(current) + " / " + milisecToMinSec(videoView.getDuration()));
@@ -461,10 +503,116 @@ public class VideoActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 100) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
+        showFeedback(feedbackManager.getFeedbacksAtTime((int)(videoView.getDuration() * (x / width))));
         playTime.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
         Log.d("width", Integer.toString(width));
         Log.d("x", Float.toString(x));
         Log.d("set progress", Integer.toString((int)((x * 100) / width)));
         Log.d("seek to", Integer.toString((int)(videoView.getDuration() * (x / width))));
+    }
+
+    /**
+     * Created by zeniuus on 2017. 7. 13..
+     */
+
+    public class FeedbackHistoryAdapter extends ArrayAdapter<Feedback> {
+        ArrayList<Feedback> mList;
+        public FeedbackHistoryAdapter(Context context, int textViewResourceId) {
+            super(context, textViewResourceId);
+        }
+
+        public FeedbackHistoryAdapter(Context context, int resource, List<Feedback> items) {
+            super(context, resource, items);
+            mList = new ArrayList<>(items);
+        }
+
+        @Override
+        public View getView(int pos, View convertView, ViewGroup parent) {
+            View v = convertView;
+
+            if (v == null) {
+                LayoutInflater inflater;
+                inflater = LayoutInflater.from(getContext());
+                v = inflater.inflate(android.R.layout.simple_list_item_1, null);
+            }
+
+            TextView textView = (TextView) v.findViewById(android.R.id.text1);
+            textView.setText(getItem(pos).toString());
+
+            return v;
+        }
+    }
+
+    /**
+     * Created by zeniuus on 2017. 7. 16..
+     */
+
+    public class SuggestionFeedbackAdapter extends ArrayAdapter<Feedback> {
+        ArrayList<Feedback> mList;
+
+        public SuggestionFeedbackAdapter(Context context, int textViewResourceId) {
+            super(context, textViewResourceId);
+        }
+
+        public SuggestionFeedbackAdapter(Context context, int resource, List<Feedback> items) {
+            super(context, resource, items);
+            mList = new ArrayList<>(items);
+        }
+
+        @Override
+        public View getView(final int pos, View convertView, ViewGroup parent) {
+            View v = convertView;
+
+            if (v == null) {
+                LayoutInflater inflater;
+                inflater = LayoutInflater.from(getContext());
+                v = inflater.inflate(R.layout.suggestion_feedback_list_item, null);
+            }
+
+            final TextView textView = (TextView) v.findViewById(R.id.suggestion_feedback);
+            textView.setText(getItem(pos).toString());
+
+            textView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d("event", "click");
+                    feedbackManager.giveLikeToFeedback(suggestionFeedbackAdapter.getItem(pos));
+                }
+            });
+            textView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    Log.d("event", "long click");
+                    pauseVideo();
+                    isThreadFeedback = true;
+                    givingThreadTo.setText(textView.getText());
+                    InputMethodManager keyboard = (InputMethodManager)
+                            getSystemService(Context.INPUT_METHOD_SERVICE);
+                    keyboard.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                    feedbackInput.requestFocus();
+                    toWhichFeedback = suggestionFeedbackAdapter.getItem(pos);
+                    return true;
+                }
+            });
+
+            Button expandBtn = (Button) v.findViewById(R.id.expand_btn);
+            expandBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    selectedFeedback.setText("Thread: " + suggestionFeedbackAdapter.getItem(pos).toString());
+                    gobackBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            suggestionFeedbackLayout.setVisibility(View.VISIBLE);
+                            threadLayout.setVisibility(View.GONE);
+                        }
+                    });
+                    suggestionFeedbackLayout.setVisibility(View.GONE);
+                    threadLayout.setVisibility(View.VISIBLE);
+                }
+            });
+
+            return v;
+        }
     }
 }

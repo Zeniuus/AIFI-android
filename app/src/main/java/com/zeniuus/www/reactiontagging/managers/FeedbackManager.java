@@ -32,7 +32,7 @@ public class FeedbackManager {
     Context context;
     Socket mSocket;
 
-    public FeedbackManager(String videoName, String userId, Context context) {
+    public FeedbackManager(String videoName, final String userId, Context context) {
         feedbacks = new ArrayList<>();
         this.videoName = videoName;
         this.userId = userId;
@@ -64,10 +64,66 @@ public class FeedbackManager {
                             ((JSONObject) args[0]).getString("userId"),
                             ((JSONObject) args[0]).getInt("startTime") + "",
                             ((JSONObject) args[0]).getInt("endTime") + "",
-                            ((JSONObject) args[0]).getString("feedback")
+                            ((JSONObject) args[0]).getString("feedback"),
+                            ((JSONObject) args[0]).getJSONArray("like"),
+                            ((JSONObject) args[0]).getJSONArray("thread")
                     );
                     feedbacks.add(feedback);
                     Collections.sort(feedbacks, mComparator);
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
+        }).on("feedback like", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Iterator<Feedback> iter = feedbacks.iterator();
+
+                try {
+                    Feedback feedback = new Feedback(
+                            ((JSONObject) args[0]).getString("userId"),
+                            ((JSONObject) args[0]).getInt("startTime") + "",
+                            ((JSONObject) args[0]).getInt("endTime") + "",
+                            ((JSONObject) args[0]).getString("feedback"),
+                            ((JSONObject) args[0]).getJSONArray("like"),
+                            null
+                    );
+
+                    while (iter.hasNext()) {
+                        Feedback temp = iter.next();
+                        if (isSame(temp, feedback)) {
+                            temp.giveLike(((JSONObject) args[0]).getString("likeUserId"));
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
+        }).on("thread feedback addition", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Iterator<Feedback> iter = feedbacks.iterator();
+
+                try {
+                    Feedback feedback = new Feedback(
+                            ((JSONObject) args[0]).getString("userId"),
+                            ((JSONObject) args[0]).getInt("startTime") + "",
+                            ((JSONObject) args[0]).getInt("endTime") + "",
+                            ((JSONObject) args[0]).getString("feedback"),
+                            ((JSONObject) args[0]).getJSONArray("like"),
+                            null
+                    );
+
+                    while (iter.hasNext()) {
+                        Feedback temp = iter.next();
+                        if (isSame(temp, feedback)) {
+                            temp.giveThreadFeedback(
+                                    ((JSONObject) args[0]).getString("threadUserId"),
+                                    ((JSONObject) args[0]).getString("threadFeedback"));
+                            break;
+                        }
+                    }
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -87,7 +143,9 @@ public class FeedbackManager {
                         jsonObject.getString("userId"),
                         jsonObject.getInt("startTime") + "",
                         jsonObject.getInt("endTime") + "",
-                        jsonObject.getString("feedback"));
+                        jsonObject.getString("feedback"),
+                        jsonObject.getJSONArray("like"),
+                        jsonObject.getJSONArray("thread"));
                 feedbacks.add(feedback);
             }
         } catch (Exception e) {
@@ -162,14 +220,89 @@ public class FeedbackManager {
         return onesFeedback;
     }
 
+    public void giveLikeToFeedback(Feedback feedback) {
+        Iterator<Feedback> iter = feedbacks.iterator();
+        while (iter.hasNext()) {
+            Feedback temp = iter.next();
+            if (isSame(temp, feedback)) {
+                try {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.accumulate("userId", feedback.getUserId());
+                    jsonObject.accumulate("startTime", feedback.getStartTime());
+                    jsonObject.accumulate("endTime", feedback.getEndTime());
+                    jsonObject.accumulate("feedback", feedback.getFeedback());
+                    jsonObject.accumulate("like", feedback.getLike());
+                    jsonObject.accumulate("likeUserId", userId);
+
+                    String result = new HttpRequestHandler
+                            ("POST", MainActivity.SERVER_URL + "/give_like_to_feedback/" + videoName, jsonObject.toString())
+                            .doHttpRequest();
+                    Log.d("server", "giving like to feedback result: " + result);
+                    Toast.makeText(context, "give like to: " + feedback.getFeedback(), Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
+        }
+    }
+
+    public void giveLikeToThread(Feedback feedback, int index) {
+        Iterator<Feedback> iter = feedbacks.iterator();
+        while (iter.hasNext()) {
+            Feedback temp = iter.next();
+            if (isSame(temp, feedback)) {
+                try {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.accumulate("userId", feedback.getUserId());
+                    jsonObject.accumulate("startTime", feedback.getStartTime());
+                    jsonObject.accumulate("endTime", feedback.getEndTime());
+                    jsonObject.accumulate("feedback", feedback.getFeedback());
+                    jsonObject.accumulate("like", feedback.getLike());
+                    jsonObject.accumulate("threadIndex", index);
+                    jsonObject.accumulate("likeUserId", userId);
+
+                    String result = new HttpRequestHandler
+                            ("POST", MainActivity.SERVER_URL + "/give_like_to_thread/" + videoName, jsonObject.toString())
+                            .doHttpRequest();
+                    Log.d("server", "giving like to thread result: " + result);
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
+        }
+    }
+
+    public void giveThreadFeedback(Feedback feedback, String userId, String threadFeedback) {
+        Iterator<Feedback> iter = feedbacks.iterator();
+        while (iter.hasNext()) {
+            Feedback temp = iter.next();
+            if (isSame(temp, feedback)) {
+                try {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.accumulate("userId", feedback.getUserId());
+                    jsonObject.accumulate("startTime", feedback.getStartTime());
+                    jsonObject.accumulate("endTime", feedback.getEndTime());
+                    jsonObject.accumulate("feedback", feedback.getFeedback());
+                    jsonObject.accumulate("like", feedback.getLike());
+                    jsonObject.accumulate("threadUserId", userId);
+                    jsonObject.accumulate("threadFeedback", threadFeedback);
+
+                    String result = new HttpRequestHandler
+                            ("POST", MainActivity.SERVER_URL + "/new_thread_feedback/" + videoName, jsonObject.toString())
+                            .doHttpRequest();
+                    Log.d("server", "new thread feedback result: " + result);
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
+        }
+    }
+
     public void remove(Feedback feedback) {
         Iterator<Feedback> iter = feedbacks.iterator();
         while (iter.hasNext()) {
             Feedback temp = iter.next();
-            if (temp.getUserId().compareTo(feedback.getUserId()) == 0
-                    && temp.getStartTime() == feedback.getStartTime()
-                    && temp.getEndTime() == feedback.getEndTime()
-                    && temp.getFeedback().compareTo(feedback.getFeedback()) == 0) {
+            if (isSame(temp, feedback)) {
                 feedbacks.remove(temp);
                 break;
             }
@@ -184,4 +317,14 @@ public class FeedbackManager {
             else return 1;
         }
     };
+
+    private boolean isSame(Feedback feedback1, Feedback feedback2) {
+        if (feedback1.getUserId().compareTo(feedback2.getUserId()) == 0
+                && feedback1.getStartTime() == feedback2.getStartTime()
+                && feedback1.getEndTime() == feedback2.getEndTime()
+                && feedback1.getFeedback().compareTo(feedback2.getFeedback()) == 0
+                && feedback1.getLike().toString().compareTo(feedback2.getLike().toString()) == 0)
+            return true;
+        else return false;
+    }
 }
