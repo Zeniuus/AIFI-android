@@ -3,8 +3,6 @@ package com.zeniuus.www.reactiontagging.activities;
 import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
-import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.widget.DrawerLayout;
@@ -17,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -38,6 +35,7 @@ import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 import com.zeniuus.www.reactiontagging.types.Emoji;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -66,11 +64,13 @@ public class VideoActivity extends AppCompatActivity {
     TextView emojiANGRY;
     TextView givingThreadTo;
     LinearLayout suggestionFeedbackLayout;
-    ListView suggestionFeedbackListView;
+    ListView suggestionFeedbackList;
+    SuggestionFeedbackAdapter suggestionFeedbackAdapter;
     LinearLayout threadLayout;
     Button gobackBtn;
     TextView selectedFeedback;
-    SuggestionFeedbackAdapter suggestionFeedbackAdapter;
+    ListView threadFeedbackList;
+    ThreadFeedbackAdapter threadFeedbackAdapter;
     ListView feedbackHistoryList;
     DrawerLayout drawerLayout;
     ActionBarDrawerToggle actionBarDrawerToggle;
@@ -82,8 +82,11 @@ public class VideoActivity extends AppCompatActivity {
     String userId;
     ArrayList<Feedback> suggestionFeedback;
     ArrayList<Feedback> myFeedback;
+    ArrayList<JSONObject> threadFeedback;
     boolean isThreadFeedback = false;
     Feedback toWhichFeedback;
+    boolean isShowingSuggestionFeedback = true;
+    Feedback currThreadFeedback;
 
 //    final static String[] SUGGESTION_FEEDBACK = {
 //            "need more description",
@@ -110,7 +113,10 @@ public class VideoActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        suggestionFeedbackLayout.setVisibility(View.VISIBLE);
+                        if (isShowingSuggestionFeedback)
+                            suggestionFeedbackLayout.setVisibility(View.VISIBLE);
+                        else
+                            threadLayout.setVisibility(View.VISIBLE);
                         isThreadFeedback = false;
                         givingThreadTo.setVisibility(View.GONE);
                     }
@@ -122,7 +128,10 @@ public class VideoActivity extends AppCompatActivity {
             {
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        suggestionFeedbackLayout.setVisibility(View.GONE);
+                        if (isShowingSuggestionFeedback)
+                            suggestionFeedbackLayout.setVisibility(View.GONE);
+                        else
+                            threadLayout.setVisibility(View.GONE);
                         if (isThreadFeedback)
                             givingThreadTo.setVisibility(View.VISIBLE);
                     }
@@ -278,56 +287,35 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
 
-        suggestionFeedbackLayout = (LinearLayout) findViewById(R.id.suggestion_feedback_layout);
-
         givingThreadTo = (TextView) findViewById(R.id.feedback_giving_thread_to);
-        suggestionFeedbackListView = (ListView) findViewById(R.id.suggestion_feedback_list_view);
-        threadLayout = (LinearLayout) findViewById(R.id.thread_layout);
-        gobackBtn = (Button) findViewById(R.id.goback_btn);
-        selectedFeedback = (TextView) findViewById(R.id.selected_feedback);
+
+        suggestionFeedbackLayout = (LinearLayout) findViewById(R.id.suggestion_feedback_layout);
+        suggestionFeedbackList = (ListView) findViewById(R.id.suggestion_feedback_list);
         suggestionFeedback = new ArrayList<>();
         suggestionFeedbackAdapter = new SuggestionFeedbackAdapter
                 (this, android.R.layout.simple_list_item_1, suggestionFeedback);
-        suggestionFeedbackListView.setAdapter(suggestionFeedbackAdapter);
-//        suggestionFeedbackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-////                // give feedback on click
-////                String feedback = suggestionFeedbackListView.getItemAtPosition(position).toString();
-////                int startTime = videoView.getCurrentPosition();
-////                feedbackManager.addItem(
-////                        Integer.toString(startTime),
-////                        Integer.toString(startTime + 5000),
-////                        feedback
-////                );
-//                // give like to feedback on click
-//                feedbackManager.giveLikeToFeedback(suggestionFeedbackAdapter.getItem(position));
-//            }
-//        });
-//
-//        suggestionFeedbackListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-//                isThreadFeedback = true;
-//                InputMethodManager keyboard = (InputMethodManager)
-//                        getSystemService(Context.INPUT_METHOD_SERVICE);
-//                keyboard.showSoftInput(feedbackInput, 0);
-//                return false;
-//            }
-//        });
+        suggestionFeedbackList.setAdapter(suggestionFeedbackAdapter);
 
+        threadLayout = (LinearLayout) findViewById(R.id.thread_layout);
+        gobackBtn = (Button) findViewById(R.id.goback_btn);
+        gobackBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                suggestionFeedbackLayout.setVisibility(View.VISIBLE);
+                threadLayout.setVisibility(View.GONE);
+                isShowingSuggestionFeedback = true;
+            }
+        });
+        selectedFeedback = (TextView) findViewById(R.id.selected_feedback);
+        threadFeedbackList = (ListView) findViewById(R.id.thread_feedback_list);
+        threadFeedback = new ArrayList<>();
+        threadFeedbackAdapter = new ThreadFeedbackAdapter(this, android.R.layout.simple_list_item_1, threadFeedback);
+        threadFeedbackList.setAdapter(threadFeedbackAdapter);
 
         feedbackHistoryList = (ListView) findViewById(R.id.feedback_history_list);
         myFeedback = new ArrayList<>();
         feedbackHistoryAdapter = new FeedbackHistoryAdapter(this, android.R.layout.simple_list_item_1, myFeedback);
         feedbackHistoryList.setAdapter(feedbackHistoryAdapter);
-//        feedbackHistoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                Log.d("listview", "clicked : " + position);
-//            }
-//        });
-
         feedbackHistoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
@@ -576,7 +564,7 @@ public class VideoActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     Log.d("event", "click");
-                    feedbackManager.giveLikeToFeedback(suggestionFeedbackAdapter.getItem(pos));
+                    feedbackManager.giveLikeToFeedback(getItem(pos));
                 }
             });
             textView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -590,7 +578,7 @@ public class VideoActivity extends AppCompatActivity {
                             getSystemService(Context.INPUT_METHOD_SERVICE);
                     keyboard.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                     feedbackInput.requestFocus();
-                    toWhichFeedback = suggestionFeedbackAdapter.getItem(pos);
+                    toWhichFeedback = getItem(pos);
                     return true;
                 }
             });
@@ -599,18 +587,71 @@ public class VideoActivity extends AppCompatActivity {
             expandBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    selectedFeedback.setText("Thread: " + suggestionFeedbackAdapter.getItem(pos).toString());
-                    gobackBtn.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            suggestionFeedbackLayout.setVisibility(View.VISIBLE);
-                            threadLayout.setVisibility(View.GONE);
+                    currThreadFeedback = getItem(pos);
+
+                    selectedFeedback.setText("Thread: " + getItem(pos).toString());
+
+                    threadFeedback.clear();
+                    try {
+                        JSONArray jsonArray = getItem(pos).getThread();
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            threadFeedback.add(jsonArray.getJSONObject(i));
                         }
-                    });
+
+                        threadFeedbackAdapter.notifyDataSetChanged();
+                    } catch (Exception e) {
+                        Log.d("exception", e.toString());
+                    }
+
                     suggestionFeedbackLayout.setVisibility(View.GONE);
                     threadLayout.setVisibility(View.VISIBLE);
+                    isShowingSuggestionFeedback = false;
                 }
             });
+
+            return v;
+        }
+    }
+
+    public class ThreadFeedbackAdapter extends ArrayAdapter<JSONObject> {
+        ArrayList<JSONObject> mList;
+
+        public ThreadFeedbackAdapter(Context context, int textViewResourceId) {
+            super(context, textViewResourceId);
+        }
+
+        public ThreadFeedbackAdapter(Context context, int resource, List<JSONObject> items) {
+            super(context, resource, items);
+            mList = new ArrayList<>(items);
+        }
+
+        private String toString(int pos) {
+            try {
+                return getItem(pos).getString("feedback");
+            } catch (Exception e) {
+                Log.d("exception", e.toString());
+                return "";
+            }
+        }
+
+        @Override
+        public View getView(final int pos, View convertView, ViewGroup parent) {
+            View v = convertView;
+
+            if (v == null) {
+                LayoutInflater inflater;
+                inflater = LayoutInflater.from(getContext());
+                v = inflater.inflate(android.R.layout.simple_list_item_1, null);
+            }
+
+            TextView textView = (TextView) v.findViewById(android.R.id.text1);
+            textView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    feedbackManager.giveLikeToThread(currThreadFeedback, pos);
+                }
+            });
+            textView.setText(toString(pos));
 
             return v;
         }
