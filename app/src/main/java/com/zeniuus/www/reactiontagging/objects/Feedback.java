@@ -65,11 +65,11 @@ public class Feedback {
             JSONArray jsonArray = jsonObject.getJSONArray("like");
             jsonArray.put(userId);
             jsonObject.put("like", jsonArray);
-            thread.remove(index);
+//            thread.remove(index);
             thread.put(index, jsonObject);
             Log.d("json object", thread.toString());
         } catch (Exception e) {
-            Log.d("exception", e.toString());
+            Log.d("exception2", e.toString());
         }
     }
 

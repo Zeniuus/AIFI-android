@@ -132,6 +132,7 @@ public class FeedbackManager {
             @Override
             public void call(Object... args) {
                 Iterator<Feedback> iter = feedbacks.iterator();
+                Log.d("data log", "data from server: " + ((JSONObject) args[0]).toString());
 
                 try {
                     Feedback feedback = new Feedback(
@@ -153,7 +154,7 @@ public class FeedbackManager {
                         }
                     }
                 } catch (Exception e) {
-                    Log.d("exception", e.toString());
+                    Log.d("exception1", e.toString());
                 }
             }
         });

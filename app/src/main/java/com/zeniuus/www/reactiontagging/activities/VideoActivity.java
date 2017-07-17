@@ -649,6 +649,7 @@ public class VideoActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     feedbackManager.giveLikeToThreadFeedback(currThreadFeedback, pos);
+                    Log.d("data log", "pos: " + pos);
                 }
             });
             textView.setText(toString(pos));
