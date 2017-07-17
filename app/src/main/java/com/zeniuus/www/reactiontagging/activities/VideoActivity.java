@@ -56,12 +56,12 @@ public class VideoActivity extends AppCompatActivity {
     TextView title;
     TextView playTime;
 //    TextView feedbackView;
-    TextView emojiLIKE;
-    TextView emojiLOVE;
-    TextView emojiHAHA;
-    TextView emojiWOW;
-    TextView emojiSAD;
-    TextView emojiANGRY;
+//    TextView emojiLIKE;
+//    TextView emojiLOVE;
+//    TextView emojiHAHA;
+//    TextView emojiWOW;
+//    TextView emojiSAD;
+//    TextView emojiANGRY;
     TextView givingThreadTo;
     LinearLayout suggestionFeedbackLayout;
     ListView suggestionFeedbackList;
@@ -243,49 +243,49 @@ public class VideoActivity extends AppCompatActivity {
 
 //        feedbackView = (TextView) findViewById(R.id.feedback_display);
 
-        emojiLIKE = (TextView) findViewById(R.id.emoji_like);
-        emojiLOVE = (TextView) findViewById(R.id.emoji_love);
-        emojiHAHA = (TextView) findViewById(R.id.emoji_haha);
-        emojiWOW = (TextView) findViewById(R.id.emoji_wow);
-        emojiSAD = (TextView) findViewById(R.id.emoji_sad);
-        emojiANGRY = (TextView) findViewById(R.id.emoji_angry);
-
-        emojiLIKE.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.LIKE);
-            }
-        });
-        emojiLOVE.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.LOVE);
-            }
-        });
-        emojiHAHA.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.HAHA);
-            }
-        });
-        emojiWOW.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.WOW);
-            }
-        });
-        emojiSAD.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.SAD);
-            }
-        });
-        emojiANGRY.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.ANGRY);
-            }
-        });
+//        emojiLIKE = (TextView) findViewById(R.id.emoji_like);
+//        emojiLOVE = (TextView) findViewById(R.id.emoji_love);
+//        emojiHAHA = (TextView) findViewById(R.id.emoji_haha);
+//        emojiWOW = (TextView) findViewById(R.id.emoji_wow);
+//        emojiSAD = (TextView) findViewById(R.id.emoji_sad);
+//        emojiANGRY = (TextView) findViewById(R.id.emoji_angry);
+//
+//        emojiLIKE.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.LIKE);
+//            }
+//        });
+//        emojiLOVE.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.LOVE);
+//            }
+//        });
+//        emojiHAHA.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.HAHA);
+//            }
+//        });
+//        emojiWOW.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.WOW);
+//            }
+//        });
+//        emojiSAD.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.SAD);
+//            }
+//        });
+//        emojiANGRY.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                emojiFeedbackManager.addItem(videoView.getCurrentPosition(), Emoji.ANGRY);
+//            }
+//        });
 
         givingThreadTo = (TextView) findViewById(R.id.feedback_giving_thread_to);
 
@@ -395,14 +395,14 @@ public class VideoActivity extends AppCompatActivity {
         suggestionFeedbackAdapter.notifyDataSetChanged();
     }
 
-    public void showEmojiFeedback(int[] emojiCnt) {
-        emojiLIKE.setText(" " + emojiCnt[0]);
-        emojiLOVE.setText(" " + emojiCnt[1]);
-        emojiHAHA.setText(" " + emojiCnt[2]);
-        emojiWOW.setText(" " + emojiCnt[3]);
-        emojiSAD.setText(" " + emojiCnt[4]);
-        emojiANGRY.setText(" " + emojiCnt[5]);
-    }
+//    public void showEmojiFeedback(int[] emojiCnt) {
+//        emojiLIKE.setText(" " + emojiCnt[0]);
+//        emojiLOVE.setText(" " + emojiCnt[1]);
+//        emojiHAHA.setText(" " + emojiCnt[2]);
+//        emojiWOW.setText(" " + emojiCnt[3]);
+//        emojiSAD.setText(" " + emojiCnt[4]);
+//        emojiANGRY.setText(" " + emojiCnt[5]);
+//    }
 
     public void updateMyFeedback() {
         Iterator<Feedback> iter = feedbackManager.getFeedbacksOfPerson(userId).iterator();
@@ -459,7 +459,7 @@ public class VideoActivity extends AppCompatActivity {
             Log.d("progress", "current progress : " + progressBar.getProgress());
 
             showFeedback(feedbackManager.getFeedbacksAtTime(current));
-            showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
+//            showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
             updateMyFeedback();
             playTime.setText(milisecToMinSec(current) + " / " + milisecToMinSec(videoView.getDuration()));
 
@@ -479,7 +479,7 @@ public class VideoActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(videoView.getCurrentPosition()));
+//                        showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(videoView.getCurrentPosition()));
                     }
                 });
             }
