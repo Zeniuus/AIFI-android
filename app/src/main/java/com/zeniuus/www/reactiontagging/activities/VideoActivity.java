@@ -40,6 +40,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,19 +84,8 @@ public class VideoActivity extends AppCompatActivity {
     ArrayList<Feedback> suggestionFeedback;
     ArrayList<Feedback> myFeedback;
     ArrayList<JSONObject> threadFeedback;
-    boolean isThreadFeedback = false;
-    Feedback toWhichFeedback;
     boolean isShowingSuggestionFeedback = true;
     Feedback currThreadFeedback;
-
-//    final static String[] SUGGESTION_FEEDBACK = {
-//            "need more description",
-//            "weak connection",
-//            "no reference",
-//            "lack of visual aids",
-//            "too fast",
-//            "typo in slide"
-//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,7 +107,6 @@ public class VideoActivity extends AppCompatActivity {
                             suggestionFeedbackLayout.setVisibility(View.VISIBLE);
                         else
                             threadLayout.setVisibility(View.VISIBLE);
-                        isThreadFeedback = false;
                         givingThreadTo.setVisibility(View.GONE);
                     }
                 });
@@ -130,10 +119,10 @@ public class VideoActivity extends AppCompatActivity {
                     public void run() {
                         if (isShowingSuggestionFeedback)
                             suggestionFeedbackLayout.setVisibility(View.GONE);
-                        else
+                        else {
                             threadLayout.setVisibility(View.GONE);
-                        if (isThreadFeedback)
                             givingThreadTo.setVisibility(View.VISIBLE);
+                        }
                     }
                 });
             }
@@ -194,7 +183,7 @@ public class VideoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 int startTime = videoView.getCurrentPosition();
-                if (!isThreadFeedback) {
+                if (isShowingSuggestionFeedback) {
                     Log.d("event", "give a new feedback");
                     if (feedbackManager.addItem(
                             Integer.toString(startTime),
@@ -203,12 +192,12 @@ public class VideoActivity extends AppCompatActivity {
                         Toast.makeText(VideoActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
                     else {
                         feedbackInput.setText("");
-                        softKeyboard.openSoftKeyboard();
+                        softKeyboard.closeSoftKeyboard();
 //                        new ProgressController().execute();
                     }
                 } else {
                     Log.d("event", "give a new thread feedback");
-                    feedbackManager.giveThreadFeedback(toWhichFeedback, userId, feedbackInput.getText().toString());
+                    feedbackManager.giveThreadFeedback(currThreadFeedback, userId, feedbackInput.getText().toString());
                     feedbackInput.setText("");
                     softKeyboard.closeSoftKeyboard();
 //                    new ProgressController().execute();
@@ -374,24 +363,27 @@ public class VideoActivity extends AppCompatActivity {
             public void onDrawerOpened(View drawerView) {
                 Log.d("drawer layout", "opened");
                 super.onDrawerOpened(drawerView);
+                updateMyFeedback();
                 pauseVideo();
             }
         };
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
     }
 
-    private void showFeedback(ArrayList<Feedback> feedbacks) {
+    private void updateFeedback(ArrayList<Feedback> feedbacks) {
         suggestionFeedback.clear();
 
-        if (!isThreadFeedback) {
-            Iterator<Feedback> iter = feedbacks.iterator();
-            while (iter.hasNext()) {
-                suggestionFeedback.add(iter.next());
-            }
-        } else {
-            // TODO: fill suggestionFeedback with thread feedback
+        Iterator<Feedback> iter = feedbacks.iterator();
+        while (iter.hasNext()) {
+            suggestionFeedback.add(iter.next());
         }
 
+        suggestionFeedbackAdapter.notifyDataSetChanged();
+    }
+
+    public void addFeedback(Feedback feedback) {
+        suggestionFeedback.add(feedback);
+        Collections.sort(suggestionFeedback, FeedbackManager.mComparator);
         suggestionFeedbackAdapter.notifyDataSetChanged();
     }
 
@@ -413,6 +405,20 @@ public class VideoActivity extends AppCompatActivity {
         }
 
         feedbackHistoryAdapter.notifyDataSetChanged();
+    }
+
+    public void updateThreadFeedback(Feedback feedback) {
+        threadFeedback.clear();
+        try {
+            JSONArray jsonArray = feedback.getThread();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                threadFeedback.add(jsonArray.getJSONObject(i));
+            }
+
+            threadFeedbackAdapter.notifyDataSetChanged();
+        } catch (Exception e) {
+            Log.d("exception", e.toString());
+        }
     }
 
     private void pauseVideo() {
@@ -458,7 +464,7 @@ public class VideoActivity extends AppCompatActivity {
             progressBar.setProgress((current * 100) / duration);
             Log.d("progress", "current progress : " + progressBar.getProgress());
 
-            showFeedback(feedbackManager.getFeedbacksAtTime(current));
+            updateFeedback(feedbackManager.getFeedbacksAtTime(current));
 //            showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
             updateMyFeedback();
             playTime.setText(milisecToMinSec(current) + " / " + milisecToMinSec(videoView.getDuration()));
@@ -472,7 +478,7 @@ public class VideoActivity extends AppCompatActivity {
         return milisec / 60000 + ":" + (milisec % 60000) / 1000;
     }
 
-    public void refreshEmojiFeedback() {
+    public void updateEmoticons() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -491,7 +497,7 @@ public class VideoActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 100) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
-        showFeedback(feedbackManager.getFeedbacksAtTime((int)(videoView.getDuration() * (x / width))));
+        updateFeedback(feedbackManager.getFeedbacksAtTime((int)(videoView.getDuration() * (x / width))));
         playTime.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
         Log.d("width", Integer.toString(width));
         Log.d("x", Float.toString(x));
@@ -560,26 +566,32 @@ public class VideoActivity extends AppCompatActivity {
             final TextView textView = (TextView) v.findViewById(R.id.suggestion_feedback);
             textView.setText(getItem(pos).toString());
 
-            textView.setOnClickListener(new View.OnClickListener() {
+//            textView.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    Log.d("event", "click");
+//
+//                    pauseVideo();
+//                    givingThreadTo.setText(textView.getText());
+//                    InputMethodManager keyboard = (InputMethodManager)
+//                            getSystemService(Context.INPUT_METHOD_SERVICE);
+//                    keyboard.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+//                    feedbackInput.requestFocus();
+//                }
+//            });
+//            textView.setOnLongClickListener(new View.OnLongClickListener() {
+//                @Override
+//                public boolean onLongClick(View view) {
+//                    Log.d("event", "long click");
+//                    return true;
+//                }
+//            });
+
+            Button feedbackLikeBtn = (Button) v.findViewById(R.id.feedback_like_btn);
+            feedbackLikeBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Log.d("event", "click");
                     feedbackManager.giveLikeToFeedback(getItem(pos));
-                }
-            });
-            textView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    Log.d("event", "long click");
-                    pauseVideo();
-                    isThreadFeedback = true;
-                    givingThreadTo.setText(textView.getText());
-                    InputMethodManager keyboard = (InputMethodManager)
-                            getSystemService(Context.INPUT_METHOD_SERVICE);
-                    keyboard.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-                    feedbackInput.requestFocus();
-                    toWhichFeedback = getItem(pos);
-                    return true;
                 }
             });
 
@@ -591,21 +603,12 @@ public class VideoActivity extends AppCompatActivity {
 
                     selectedFeedback.setText("Thread: " + getItem(pos).toString());
 
-                    threadFeedback.clear();
-                    try {
-                        JSONArray jsonArray = getItem(pos).getThread();
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            threadFeedback.add(jsonArray.getJSONObject(i));
-                        }
-
-                        threadFeedbackAdapter.notifyDataSetChanged();
-                    } catch (Exception e) {
-                        Log.d("exception", e.toString());
-                    }
+                    updateThreadFeedback(getItem(pos));
 
                     suggestionFeedbackLayout.setVisibility(View.GONE);
                     threadLayout.setVisibility(View.VISIBLE);
                     isShowingSuggestionFeedback = false;
+                    givingThreadTo.setText(textView.getText());
                 }
             });
 
@@ -641,18 +644,20 @@ public class VideoActivity extends AppCompatActivity {
             if (v == null) {
                 LayoutInflater inflater;
                 inflater = LayoutInflater.from(getContext());
-                v = inflater.inflate(android.R.layout.simple_list_item_1, null);
+                v = inflater.inflate(R.layout.thread_feedback_list_item, null);
             }
 
-            TextView textView = (TextView) v.findViewById(android.R.id.text1);
-            textView.setOnClickListener(new View.OnClickListener() {
+            TextView textView = (TextView) v.findViewById(R.id.thread_feedback);
+            textView.setText(toString(pos));
+
+            Button threadFeedbackLikeBtn = (Button) v.findViewById(R.id.thread_feedback_like_btn);
+            threadFeedbackLikeBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     feedbackManager.giveLikeToThreadFeedback(currThreadFeedback, pos);
-                    Log.d("data log", "pos: " + pos);
                 }
             });
-            textView.setText(toString(pos));
+
 
             return v;
         }

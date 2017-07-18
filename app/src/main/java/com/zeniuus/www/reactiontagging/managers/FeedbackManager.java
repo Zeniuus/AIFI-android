@@ -45,6 +45,8 @@ public class FeedbackManager {
             Log.d("exception", e.toString());
         }
 
+        final VideoActivity videoActivity = (VideoActivity) context;
+
         mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
             @Override
             public void call(Object... args) {
@@ -70,6 +72,7 @@ public class FeedbackManager {
                     );
                     feedbacks.add(feedback);
                     Collections.sort(feedbacks, mComparator);
+                    videoActivity.addFeedback(feedback);
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -121,9 +124,13 @@ public class FeedbackManager {
                             temp.giveThreadFeedback(
                                     ((JSONObject) args[0]).getString("threadUserId"),
                                     ((JSONObject) args[0]).getString("threadFeedback"));
+
+                            videoActivity.updateThreadFeedback(temp);
                             break;
                         }
                     }
+
+
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -293,7 +300,8 @@ public class FeedbackManager {
                     String result = new HttpRequestHandler
                             ("POST", MainActivity.SERVER_URL + "/give_like_to_thread_feedback/" + videoName, jsonObject.toString())
                             .doHttpRequest();
-                    Log.d("server", "giving like to thread result: " + result);
+                    Log.d("server", "giving like to thread feedback result: " + result);
+                    Toast.makeText(context, "give like to: " + feedback.getThread().getJSONObject(index).getString("feedback"), Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -320,6 +328,7 @@ public class FeedbackManager {
                             ("POST", MainActivity.SERVER_URL + "/new_thread_feedback/" + videoName, jsonObject.toString())
                             .doHttpRequest();
                     Log.d("server", "new thread feedback result: " + result);
+                    Toast.makeText(context, "new thread feedback: " + threadFeedback, Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -338,7 +347,7 @@ public class FeedbackManager {
         }
     }
 
-    private final static Comparator<Feedback> mComparator = new Comparator<Feedback>() {
+    public final static Comparator<Feedback> mComparator = new Comparator<Feedback>() {
         @Override
         public int compare(Feedback o1, Feedback o2) {
             if (o1.getStartTime() < o2.getStartTime()) return -1;

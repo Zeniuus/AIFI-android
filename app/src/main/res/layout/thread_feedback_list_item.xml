@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
     <TextView
-        android:id="@+id/suggestion_feedback"
+        android:id="@+id/thread_feedback"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textColor="#000000"
@@ -11,15 +11,9 @@
         android:layout_weight="1"
         android:gravity="center_vertical"/>
     <Button
-        android:id="@+id/feedback_like_btn"
+        android:id="@+id/thread_feedback_like_btn"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:drawableLeft="@drawable/like_small"
-        android:layout_weight="0"/>
-    <Button
-        android:id="@+id/expand_btn"
-        android:layout_width="50dp"
-        android:layout_height="wrap_content"
-        android:text="&gt;"
         android:layout_weight="0"/>
 </LinearLayout>

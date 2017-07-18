@@ -69,7 +69,7 @@ public class EmojiFeedbackManager {
                     );
                     feedbacks.add(emojiFeedback);
                     Collections.sort(feedbacks, mComparator);
-                    videoActivity.refreshEmojiFeedback();
+                    videoActivity.updateEmoticons();
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
