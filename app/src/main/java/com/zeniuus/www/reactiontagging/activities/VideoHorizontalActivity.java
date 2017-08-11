@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,8 +30,11 @@ import android.widget.VideoView;
 import com.zeniuus.www.reactiontagging.R;
 import com.zeniuus.www.reactiontagging.helpers.SoftKeyboard;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
+import com.zeniuus.www.reactiontagging.objects.Feedback;
 
 import org.w3c.dom.Text;
+
+import java.util.ArrayList;
 
 import static android.view.MotionEvent.ACTION_UP;
 import static java.lang.Thread.sleep;
@@ -217,7 +221,14 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         });
 
         feedbackListView = (ListView) findViewById(R.id.feedback_list);
-        feedbackListAdapter =
+        ArrayList<String> arrayList = new ArrayList<>();
+        arrayList.add("feedback 1");
+        arrayList.add("feedback 2");
+        arrayList.add("feedback 3");
+        arrayList.add("feedback 4");
+        arrayList.add("feedback 5");
+        feedbackListAdapter = new FeedbackListAdapter(this, R.layout.list_item_feedback_list, arrayList);
+        feedbackListView.setAdapter(feedbackListAdapter);
     }
 
     private void videoPause() {
@@ -290,12 +301,44 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         playTimeTextView.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
     }
 
-    private class FeedbackListAdapter extends ArrayAdapter {
-        public FeedbackListAdapter(@NonNull Context context, @LayoutRes int resource) {
-            super(context, resource);
+    private class FeedbackListAdapter extends ArrayAdapter<String> {
+        public FeedbackListAdapter(@NonNull Context context, @LayoutRes int resource, ArrayList<String> data) {
+            super(context, resource, data);
         }
 
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = convertView;
 
+            if (v == null) {
+                LayoutInflater li = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = li.inflate(R.layout.list_item_feedback_list, null);
+            }
+
+            TextView feedbackTextView = (TextView) v.findViewById(R.id.feedback_text);
+            feedbackTextView.setText("feedback!");
+
+            final LinearLayout feedbackReplyLayout = (LinearLayout) v.findViewById(R.id.feedback_reply_layout);
+
+            ListView feedbackReplyListView = (ListView) v.findViewById(R.id.feedback_reply_list);
+            feedbackReplyListView.setAdapter(new ArrayAdapter<String>(VideoHorizontalActivity.this, android.R.layout.simple_list_item_1, new String[] { "reply 1", "reply 2", "reply 3"}));
+
+            TextView expandBtn = (TextView) v.findViewById(R.id.expand_btn);
+            expandBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (feedbackReplyLayout.getVisibility() == View.GONE)
+                        feedbackReplyLayout.setVisibility(View.VISIBLE);
+                    else
+                        feedbackReplyLayout.setVisibility(View.GONE);
+                }
+            });
+
+            EditText feedbackReplyInput = (EditText) v.findViewById(R.id.feedback_reply_input);
+            Button feedbackReplySubmitBtn = (Button) v.findViewById(R.id.feedback_reply_submit_btn);
+
+            return v;
+        }
     }
 
 }
