@@ -197,7 +197,7 @@ public class VideoActivity extends AppCompatActivity {
                     }
                 } else {
                     Log.d("event", "give a new thread feedback");
-                    feedbackManager.giveThreadFeedback(currThreadFeedback, userId, feedbackInput.getText().toString());
+                    feedbackManager.giveThreadFeedback(currThreadFeedback, feedbackInput.getText().toString());
                     feedbackInput.setText("");
                     softKeyboard.closeSoftKeyboard();
 //                    new ProgressController().execute();

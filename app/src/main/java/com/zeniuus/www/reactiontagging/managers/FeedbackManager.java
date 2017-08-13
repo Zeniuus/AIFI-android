@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import com.zeniuus.www.reactiontagging.activities.MainActivity;
 import com.zeniuus.www.reactiontagging.activities.VideoActivity;
+import com.zeniuus.www.reactiontagging.activities.VideoHorizontalActivity;
 import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 
@@ -45,7 +46,8 @@ public class FeedbackManager {
             Log.d("exception", e.toString());
         }
 
-        final VideoActivity videoActivity = (VideoActivity) context;
+//        final VideoActivity videoActivity = (VideoActivity) context;
+        final VideoHorizontalActivity videoHorizontalActivity = (VideoHorizontalActivity) context;
 
         mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
             @Override
@@ -72,7 +74,9 @@ public class FeedbackManager {
                     );
                     feedbacks.add(feedback);
                     Collections.sort(feedbacks, mComparator);
-                    videoActivity.addFeedback(feedback);
+//                    videoActivity.addFeedback(feedback);
+//                    videoHorizontalActivity.addFeedback(feedback);
+                    videoHorizontalActivity.updateFeedback();
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -125,7 +129,9 @@ public class FeedbackManager {
                                     ((JSONObject) args[0]).getString("threadUserId"),
                                     ((JSONObject) args[0]).getString("threadFeedback"));
 
-                            videoActivity.updateThreadFeedback(temp);
+//                            videoActivity.updateThreadFeedback(temp);
+//                            videoHorizontalActivity.updateThreadFeedback(temp);
+                            videoHorizontalActivity.updateFeedback();
                             break;
                         }
                     }
@@ -309,7 +315,7 @@ public class FeedbackManager {
         }
     }
 
-    public void giveThreadFeedback(Feedback feedback, String userId, String threadFeedback) {
+    public void giveThreadFeedback(Feedback feedback, String threadFeedback) {
         Iterator<Feedback> iter = feedbacks.iterator();
         while (iter.hasNext()) {
             Feedback temp = iter.next();
