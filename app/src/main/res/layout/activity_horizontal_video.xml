@@ -107,7 +107,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="#ffffff"/>
+                        android:background="#ffffff"
+                        android:hint="Give your feedback..."/>
 
                     <Button
                         android:id="@+id/my_feedback_submit_btn"

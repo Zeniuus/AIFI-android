@@ -34,6 +34,7 @@ import com.zeniuus.www.reactiontagging.R;
 import com.zeniuus.www.reactiontagging.helpers.SoftKeyboard;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
+import com.zeniuus.www.reactiontagging.prompts.CustomQuestionPrompt;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -66,6 +67,8 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     LinearLayout feedbackListLayout;
     TextView feedbackListBtn;
     ListView feedbackListView;
+
+    CustomQuestionPrompt prompt;
 
     FeedbackListAdapter feedbackListAdapter;
     ArrayList<Feedback> feedbackList;
@@ -100,7 +103,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 //
 //            }
 //        });
-        feedbackManager = new FeedbackManager(videoName, userId, this);
+//        feedbackManager = new FeedbackManager(videoName, userId, this);
 
         titleView = (TextView) findViewById(R.id.title);
 //        titleView.setText(videoName);
@@ -115,11 +118,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                         && event.getY() >= 0
                         && event.getX() <= videoView.getWidth()
                         && event.getY() <= videoView.getHeight()) {
-//                    if (videoView.isPlaying()) videoPause();
-//                    else {
-//                        videoStart();
-//                        new ProgressController().execute();
-//                    }
                     if (progressLayout.getVisibility() == View.GONE) {
                         titleView.setVisibility(View.VISIBLE);
                         progressLayout.setVisibility(View.VISIBLE);
@@ -232,6 +230,24 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         feedbackList = new ArrayList<>();
         feedbackListAdapter = new FeedbackListAdapter(this, R.layout.list_item_feedback_list, feedbackList);
         feedbackListView.setAdapter(feedbackListAdapter);
+
+        prompt = new CustomQuestionPrompt(this, "question question!",
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(VideoHorizontalActivity.this, "cancel button clicked", Toast.LENGTH_SHORT).show();
+                        prompt.dismiss();
+                    }
+                },
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(VideoHorizontalActivity.this, "submit button clicked", Toast.LENGTH_SHORT).show();
+                        prompt.dismiss();
+                    }
+                });
+
+        prompt.show();
     }
 
     private void videoPause() {
@@ -320,7 +336,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 100) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
-        updateFeedback();
+//        updateFeedback();
         playTimeTextView.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
     }
 

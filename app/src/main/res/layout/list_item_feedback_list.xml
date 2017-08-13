@@ -50,6 +50,7 @@
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
             android:layout_weight="0"
-            android:background="#ffffff"/>
+            android:background="#ffffff"
+            android:hint="Reply..."/>
     </LinearLayout>
 </LinearLayout>
