@@ -1,5 +1,6 @@
 package com.zeniuus.www.reactiontagging.managers;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
@@ -30,6 +31,7 @@ public class PromptManager {
     String userId, videoName;
     ArrayList<Prompt> prompts;
     CustomQuestionPrompt customQuestionPrompt;
+    Object newPrompt;
 
     public PromptManager(Context context, String userId, String videoName) {
         this.context = context;
@@ -90,38 +92,40 @@ public class PromptManager {
     }
 
     public void executePrompt(Prompt prompt) {
+        View.OnClickListener cancelListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(context, "cancel button clicked", Toast.LENGTH_SHORT).show();
+                Dialog.class.cast(newPrompt).dismiss();
+                ((VideoHorizontalActivity) context).videoStart();
+            }
+        },
+        submitListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(context, "submit button clicked", Toast.LENGTH_SHORT).show();
+                Dialog.class.cast(newPrompt).dismiss();
+                ((VideoHorizontalActivity) context).videoStart();
+            }
+        };
+
         switch (prompt.getPromptType()) {
             case CUSTOM:
-                customQuestionPrompt = new CustomQuestionPrompt(context, prompt, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(context, "cancel button clicked", Toast.LENGTH_SHORT).show();
-                        customQuestionPrompt.dismiss();
-                        ((VideoHorizontalActivity) context).videoStart();
-                    }
-                }, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(context, "submit button clicked", Toast.LENGTH_SHORT).show();
-                        customQuestionPrompt.dismiss();
-                        ((VideoHorizontalActivity) context).videoStart();
-                    }
-                });
+                newPrompt = new CustomQuestionPrompt(context, prompt, cancelListener, submitListener);
+        }
 
-                new Thread(new Runnable() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ((VideoHorizontalActivity) context).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ((VideoHorizontalActivity) context).runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                customQuestionPrompt.show();
-                                ((VideoHorizontalActivity) context).videoPause();
-                            }
-                        });
+                        Dialog.class.cast(newPrompt).show();
+                        ((VideoHorizontalActivity) context).videoPause();
                     }
-                }).run();
-                break;
-        }
+                });
+            }
+        }).run();
     }
 
     private Comparator<Prompt> comparator = new Comparator<Prompt>() {

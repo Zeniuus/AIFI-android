@@ -54,7 +54,7 @@ public class CustomQuestionPrompt extends Dialog {
     protected void onCreate(Bundle savedInstanceState) {
         WindowManager.LayoutParams lpWindow = new WindowManager.LayoutParams();
         lpWindow.flags = WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-        lpWindow.dimAmount = 0.8f;
+        lpWindow.dimAmount = 0.4f;
         getWindow().setAttributes(lpWindow);
 
         setContentView(R.layout.custom_question_prompt);
