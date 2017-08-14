@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
                 String videoName = listView.getItemAtPosition(position).toString();
                 if (isFileExisting(videoName)) {
                     Log.d("flow", "flow if");
-                    Intent intent = new Intent(MainActivity.this, VideoActivity.class);
+                    Intent intent = new Intent(MainActivity.this, VideoHorizontalActivity.class);
                     intent.putExtra("video name", videoName);
                     intent.putExtra("userId", userId);
                     startActivity(intent);
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 downloadingLayout.setVisibility(View.INVISIBLE);
-                Intent videoIntent = new Intent(MainActivity.this, VideoActivity.class);
+                Intent videoIntent = new Intent(MainActivity.this, VideoHorizontalActivity.class);
                 videoIntent.putExtra("video name", downloadingVideoName);
                 videoIntent.putExtra("userId", userId);
                 startActivity(videoIntent);

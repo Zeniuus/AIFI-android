@@ -1,24 +1,20 @@
 package com.zeniuus.www.reactiontagging.activities;
 
-import android.app.Service;
 import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,14 +29,13 @@ import android.widget.VideoView;
 import com.zeniuus.www.reactiontagging.R;
 import com.zeniuus.www.reactiontagging.helpers.SoftKeyboard;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
+import com.zeniuus.www.reactiontagging.managers.PromptManager;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 import com.zeniuus.www.reactiontagging.prompts.CustomQuestionPrompt;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.w3c.dom.Text;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -75,6 +70,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
 //    SoftKeyboard softKeyboard;
     FeedbackManager feedbackManager;
+    PromptManager promptManager;
 
     String videoName;
     String userId;
@@ -103,7 +99,8 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 //
 //            }
 //        });
-//        feedbackManager = new FeedbackManager(videoName, userId, this);
+        feedbackManager = new FeedbackManager(videoName, userId, this);
+        promptManager = new PromptManager(this, userId, videoName);
 
         titleView = (TextView) findViewById(R.id.title);
 //        titleView.setText(videoName);
@@ -141,7 +138,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         progressBar.setProgress(0);
-        progressBar.setMax(100);
+        progressBar.setMax(10000);
         progressBar.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -150,8 +147,9 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                     videoPause();
                     moveProgressBar(event);
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
-//                    startVideo();
-//                    new ProgressController().execute();
+                    promptManager.clearShownStates(videoView.getCurrentPosition());
+                    videoStart();
+                    new ProgressController().execute();
                 }
                 return true;
             }
@@ -250,13 +248,13 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         prompt.show();
     }
 
-    private void videoPause() {
+    public void videoPause() {
         playPauseIconView.setImageResource(R.drawable.ic_play);
         playPauseIconView.setTag(R.drawable.ic_play);
         videoView.pause();
     }
 
-    private void videoStart() {
+    public void videoStart() {
         playPauseIconView.setImageResource(R.drawable.ic_pause);
         playPauseIconView.setTag(R.drawable.ic_pause);
         videoView.start();
@@ -266,15 +264,17 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     public void updateFeedback() {
         int current = videoView.getCurrentPosition();
         ArrayList<Feedback> feedbacks = feedbackManager.getFeedbacksAtTime(current);
+        if (feedbackList.toString().compareTo(feedbacks.toString()) != 0) {
 
-        feedbackList.clear();
+            feedbackList.clear();
 
-        Iterator<Feedback> iter = feedbacks.iterator();
-        while (iter.hasNext()) {
-            feedbackList.add(iter.next());
+            Iterator<Feedback> iter = feedbacks.iterator();
+            while (iter.hasNext()) {
+                feedbackList.add(iter.next());
+            }
+
+            feedbackListAdapter.notifyDataSetChanged();
         }
-
-        feedbackListAdapter.notifyDataSetChanged();
     }
 
     public void addFeedback(Feedback feedback) {
@@ -313,15 +313,14 @@ public class VideoHorizontalActivity extends AppCompatActivity {
             current = videoView.getCurrentPosition();
             Log.d("progress", "current : " + current);
             Log.d("progress", "duration : " + duration);
-            progressBar.setProgress((current * 100) / duration);
+            progressBar.setProgress((current * 10000) / duration);
             Log.d("progress", "current progress : " + progressBar.getProgress());
 
             updateFeedback();
-//            showEmojiFeedback(emojiFeedbackManager.getFeedbacksAtTime(current));
-//            updateMyFeedback();
-            playTimeTextView.setText(milisecToMinSec(current) + " / " + milisecToMinSec(videoView.getDuration()));
+            promptManager.checkPrompt(current);
+            playTimeTextView.setText(milisecToMinSec(current) + " / " + milisecToMinSec(duration));
 
-            if (!videoView.isPlaying() || progressBar.getProgress() >= 100)
+            if (!videoView.isPlaying() || progressBar.getProgress() >= 10000)
                 isProgressRunning = false;
         }
     }
@@ -334,9 +333,9 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     private void moveProgressBar(MotionEvent event) {
         int width = progressBar.getWidth();
         float x = event.getX();
-        progressBar.setProgress((int)((x * 100) / width));
+        progressBar.setProgress((int)((x * 10000) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
-//        updateFeedback();
+        updateFeedback();
         playTimeTextView.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
     }
 
@@ -349,27 +348,29 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         public View getView(final int position, View convertView, ViewGroup parent) {
             View v = convertView;
 
-            if (v == null) {
-                LayoutInflater li = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater li = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            if (v == null)
                 v = li.inflate(R.layout.list_item_feedback_list, null);
-            }
 
             TextView feedbackTextView = (TextView) v.findViewById(R.id.feedback_text);
             feedbackTextView.setText(getItem(position).toString());
 
             final LinearLayout feedbackReplyLayout = (LinearLayout) v.findViewById(R.id.feedback_reply_layout);
 
-            ListView feedbackReplyListView = (ListView) v.findViewById(R.id.feedback_reply_list);
-            ArrayList<String> feedbackReplies = new ArrayList<>();
+            LinearLayout feedbackReplyListView = (LinearLayout) v.findViewById(R.id.feedback_reply_list);
+            feedbackReplyListView.removeAllViews();
             JSONArray repliesJSON = getItem(position).getThread();
             try {
                 for (int i = 0; i < repliesJSON.length(); i++) {
-                    feedbackReplies.add(repliesJSON.getJSONObject(i).getString("threadFeedback"));
+                    View replyItemView = li.inflate(android.R.layout.simple_list_item_1, null);
+                    TextView replyItemTextView = (TextView) replyItemView.findViewById(android.R.id.text1);
+                    replyItemTextView.setText(repliesJSON.getJSONObject(i).getString("feedback"));
+                    replyItemTextView.setTextColor(Color.WHITE);
+                    feedbackReplyListView.addView(replyItemView);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            feedbackReplyListView.setAdapter(new FeedbackReplyListAdapter(VideoHorizontalActivity.this, android.R.layout.simple_list_item_1, feedbackReplies));
 
             TextView expandBtn = (TextView) v.findViewById(R.id.expand_btn);
             expandBtn.setOnClickListener(new View.OnClickListener() {
@@ -390,34 +391,14 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                         String reply;
                         if ((reply = feedbackReplyInput.getText().toString()).compareTo("") == 0)
                             Toast.makeText(VideoHorizontalActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();
-                        else
+                        else {
                             feedbackManager.giveThreadFeedback(getItem(position), reply);
+                            feedbackReplyInput.setText("");
+                        }
                     }
                     return true;
                 }
             });
-
-            return v;
-        }
-    }
-
-    private class FeedbackReplyListAdapter extends ArrayAdapter<String> {
-        public FeedbackReplyListAdapter(@NonNull Context context, @LayoutRes int resource, ArrayList<String> data) {
-            super(context, resource, data);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View v = convertView;
-
-            if (v == null) {
-                LayoutInflater li = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = li.inflate(android.R.layout.simple_list_item_1, null);
-            }
-
-            TextView feedbackReplyView = (TextView) v.findViewById(android.R.id.text1);
-            feedbackReplyView.setText("feedback reply!");
-            feedbackReplyView.setTextColor(Color.WHITE);
 
             return v;
         }

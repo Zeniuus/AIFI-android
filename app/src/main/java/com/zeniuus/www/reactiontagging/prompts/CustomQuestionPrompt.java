@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.zeniuus.www.reactiontagging.R;
+import com.zeniuus.www.reactiontagging.objects.Prompt;
 
 /**
  * Created by zeniuus on 2017. 8. 13..
@@ -34,6 +35,17 @@ public class CustomQuestionPrompt extends Dialog {
 
         this.context = context;
         this.promptQuestion = promptQuestion;
+        this.cancelListener = cancelListener;
+        this.submitListener = submitListener;
+    }
+
+    public CustomQuestionPrompt(Context context, Prompt prompt,
+                                View.OnClickListener cancelListener,
+                                View.OnClickListener submitListener) {
+        super(context, android.R.style.Theme_Translucent_NoTitleBar);
+
+        this.context = context;
+        this.promptQuestion = prompt.getPromptQuestion();
         this.cancelListener = cancelListener;
         this.submitListener = submitListener;
     }

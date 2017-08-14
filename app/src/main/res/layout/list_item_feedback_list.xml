@@ -37,20 +37,22 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
         android:background="@drawable/border"
-        android:orientation="vertical">
-        <ListView
+        android:orientation="vertical"
+        android:visibility="gone">
+        <LinearLayout
+            android:orientation="vertical"
             android:id="@+id/feedback_reply_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"></ListView>
+            android:layout_weight="1"></LinearLayout>
         <EditText
             android:id="@+id/feedback_reply_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_margin="5dp"
             android:layout_weight="0"
             android:background="#ffffff"
-            android:hint="Reply..."/>
+            android:textSize="13sp"
+            android:hint="Reply..." />
     </LinearLayout>
 </LinearLayout>

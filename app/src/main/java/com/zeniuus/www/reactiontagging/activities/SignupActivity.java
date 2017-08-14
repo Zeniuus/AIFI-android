@@ -17,23 +17,23 @@ import org.json.JSONObject;
  * Created by zeniuus on 2017. 7. 11..
  */
 
-public class SigninActivity extends AppCompatActivity {
+public class SignupActivity extends AppCompatActivity {
     EditText userId;
     EditText userPw;
     EditText confirmPw;
-    Button signinBtn;
+    Button signupBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_signin);
+        setContentView(R.layout.activity_signup);
 
         userId = (EditText) findViewById(R.id.user_id);
         userPw = (EditText) findViewById(R.id.user_password);
         confirmPw = (EditText) findViewById(R.id.confirm_password);
-        signinBtn = (Button) findViewById(R.id.signin_btn);
+        signupBtn = (Button) findViewById(R.id.signin_btn);
 
-        signinBtn.setOnClickListener(new View.OnClickListener() {
+        signupBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String userIdText = userId.getText().toString();
@@ -47,7 +47,7 @@ public class SigninActivity extends AppCompatActivity {
                     try {
                         JSONObject jsonResult = new JSONObject(result);
                         if (jsonResult.getBoolean("duplicated")) {
-                            Toast.makeText(SigninActivity.this, "Duplicated ID. Please try again with another ID.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(SignupActivity.this, "Duplicated ID. Please try again with another ID.", Toast.LENGTH_SHORT).show();
                         } else {
                             JSONObject jsonObject = new JSONObject();
                             jsonObject.accumulate("userId", userIdText);
@@ -56,17 +56,17 @@ public class SigninActivity extends AppCompatActivity {
                             result = new HttpRequestHandler("POST", MainActivity.SERVER_URL + "/new_user", jsonObject.toString()).doHttpRequest();
                             jsonResult = new JSONObject(result);
                             if (jsonResult.getString("result").compareTo("success") == 0) {
-                                Toast.makeText(SigninActivity.this, "Successfuly signed in", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SignupActivity.this, "Successfuly signed in", Toast.LENGTH_SHORT).show();
                                 finish();
                             } else {
-                                Toast.makeText(SigninActivity.this, "Sign in failed with unknown error... Please try again.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SignupActivity.this, "Sign in failed with unknown error... Please try again.", Toast.LENGTH_SHORT).show();
                             }
                         }
                     } catch (Exception e) {
                         Log.d("exception", e.toString());
                     }
                 } else {
-                    Toast.makeText(SigninActivity.this, "Password does not match with confirm password.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SignupActivity.this, "Password does not match with confirm password.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
