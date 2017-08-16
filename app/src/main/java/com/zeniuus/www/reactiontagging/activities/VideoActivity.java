@@ -33,7 +33,6 @@ import com.zeniuus.www.reactiontagging.managers.EmojiFeedbackManager;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
 import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
-import com.zeniuus.www.reactiontagging.types.Emoji;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -531,7 +530,7 @@ public class VideoActivity extends AppCompatActivity {
             }
 
             TextView textView = (TextView) v.findViewById(android.R.id.text1);
-            textView.setText(getItem(pos).toString());
+            textView.setText(getItem(pos).getFeedbackText());
 
             return v;
         }
@@ -564,7 +563,7 @@ public class VideoActivity extends AppCompatActivity {
             }
 
             final TextView textView = (TextView) v.findViewById(R.id.suggestion_feedback);
-            textView.setText(getItem(pos).toString());
+            textView.setText(getItem(pos).getFeedbackText());
 
 //            textView.setOnClickListener(new View.OnClickListener() {
 //                @Override
@@ -601,7 +600,7 @@ public class VideoActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     currThreadFeedback = getItem(pos);
 
-                    selectedFeedback.setText("Thread: " + getItem(pos).toString());
+                    selectedFeedback.setText("Thread: " + getItem(pos).getFeedbackText());
 
                     updateThreadFeedback(getItem(pos));
 

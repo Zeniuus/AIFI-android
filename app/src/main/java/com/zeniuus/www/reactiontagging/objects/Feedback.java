@@ -73,5 +73,9 @@ public class Feedback {
         }
     }
 
-    public String toString() { return VideoActivity.milisecToMinSec(startTime) + " - " + feedback; }
+    public String getFeedbackText() { return VideoActivity.milisecToMinSec(startTime) + " - " + feedback; }
+
+    public String toString() {
+        return userId + "//" + startTime + "//" + endTime + "//" + feedback + "//" + like.toString() + "//" + thread.toString();
+    }
 }

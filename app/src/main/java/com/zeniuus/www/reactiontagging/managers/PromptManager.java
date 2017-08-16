@@ -32,6 +32,7 @@ public class PromptManager {
     ArrayList<Prompt> prompts;
     CustomQuestionPrompt customQuestionPrompt;
     Object newPrompt;
+    Class<?> promptType;
 
     public PromptManager(Context context, String userId, String videoName) {
         this.context = context;
@@ -40,29 +41,29 @@ public class PromptManager {
 
         prompts = new ArrayList<>();
 
-//        String result = new HttpRequestHandler("GET",
-//                MainActivity.SERVER_URL + "/get_prompt/" + videoName,
-//                "")
-//                .doHttpRequest();
-//        Log.d("server", "get prompt result: " + result);
-//        try {
-//            JSONArray jsonArray = new JSONObject(result).getJSONArray("prompt");
-//            for (int i = 0; i < jsonArray.length(); i++) {
-//                JSONObject jsonObject = jsonArray.getJSONObject(i);
-//                Prompt prompt = new Prompt(
-//                        PromptType.values()[jsonObject.getInt("type")],
-//                        jsonObject.getInt("time"),
-//                        jsonObject.getString("question")
-//                );
-//                prompts.add(prompt);
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        String result = new HttpRequestHandler("GET",
+                MainActivity.SERVER_URL + "/get_prompt/" + videoName,
+                "")
+                .doHttpRequest();
+        Log.d("server", "get prompt result: " + result);
+        try {
+            JSONArray jsonArray = new JSONObject(result).getJSONArray("prompt");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                Prompt prompt = new Prompt(
+                        PromptType.values()[jsonObject.getInt("promptType")],
+                        jsonObject.getInt("time"),
+                        jsonObject.getString("question")
+                );
+                prompts.add(prompt);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        prompts.add(new Prompt(PromptType.CUSTOM, 2000, "question 1"));
-        prompts.add(new Prompt(PromptType.CUSTOM, 6000, "question 2"));
-        prompts.add(new Prompt(PromptType.CUSTOM, 10000, "question 3"));
+//        prompts.add(new Prompt(PromptType.CUSTOM, 2000, "question 1"));
+//        prompts.add(new Prompt(PromptType.CUSTOM, 6000, "question 2"));
+//        prompts.add(new Prompt(PromptType.CUSTOM, 10000, "question 3"));
 
         Collections.sort(prompts, comparator);
     }
@@ -92,26 +93,27 @@ public class PromptManager {
     }
 
     public void executePrompt(Prompt prompt) {
-        View.OnClickListener cancelListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(context, "cancel button clicked", Toast.LENGTH_SHORT).show();
-                Dialog.class.cast(newPrompt).dismiss();
-                ((VideoHorizontalActivity) context).videoStart();
-            }
-        },
-        submitListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(context, "submit button clicked", Toast.LENGTH_SHORT).show();
-                Dialog.class.cast(newPrompt).dismiss();
-                ((VideoHorizontalActivity) context).videoStart();
-            }
-        };
+
+//        View.OnClickListener cancelListener = new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Toast.makeText(context, "cancel button clicked", Toast.LENGTH_SHORT).show();
+//                Dialog.class.cast(newPrompt).dismiss();
+//                ((VideoHorizontalActivity) context).videoStart();
+//            }
+//        },
+//        submitListener = new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Toast.makeText(context, "submit button clicked", Toast.LENGTH_SHORT).show();
+//                Dialog.class.cast(newPrompt).dismiss();
+//                ((VideoHorizontalActivity) context).videoStart();
+//            }
+//        };
 
         switch (prompt.getPromptType()) {
             case CUSTOM:
-                newPrompt = new CustomQuestionPrompt(context, prompt, cancelListener, submitListener);
+                newPrompt = new CustomQuestionPrompt(context, prompt, userId, videoName);
         }
 
         new Thread(new Runnable() {

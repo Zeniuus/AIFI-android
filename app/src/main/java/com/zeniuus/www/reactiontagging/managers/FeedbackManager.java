@@ -131,17 +131,7 @@ public class FeedbackManager {
 
 //                            videoActivity.updateThreadFeedback(temp);
 //                            videoHorizontalActivity.updateThreadFeedback(temp);
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    videoHorizontalActivity.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            videoHorizontalActivity.updateFeedback();
-                                        }
-                                    });
-                                }
-                            }).run();
+                            videoHorizontalActivity.updateFeedback();
                             break;
                         }
                     }

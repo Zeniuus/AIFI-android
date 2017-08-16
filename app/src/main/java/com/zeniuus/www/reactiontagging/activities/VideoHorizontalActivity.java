@@ -2,9 +2,9 @@ package com.zeniuus.www.reactiontagging.activities;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -27,15 +27,14 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.zeniuus.www.reactiontagging.R;
-import com.zeniuus.www.reactiontagging.helpers.SoftKeyboard;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
 import com.zeniuus.www.reactiontagging.managers.PromptManager;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
-import com.zeniuus.www.reactiontagging.prompts.CustomQuestionPrompt;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -62,8 +61,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     LinearLayout feedbackListLayout;
     TextView feedbackListBtn;
     ListView feedbackListView;
-
-    CustomQuestionPrompt prompt;
 
     FeedbackListAdapter feedbackListAdapter;
     ArrayList<Feedback> feedbackList;
@@ -106,7 +103,8 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 //        titleView.setText(videoName);
 
         videoView = (VideoView) findViewById(R.id.video_view);
-        videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.cat_behavior));
+//        videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.cat_behavior));
+        videoView.setVideoPath(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "Video" + File.separator + videoName);
         videoView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -228,24 +226,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         feedbackList = new ArrayList<>();
         feedbackListAdapter = new FeedbackListAdapter(this, R.layout.list_item_feedback_list, feedbackList);
         feedbackListView.setAdapter(feedbackListAdapter);
-
-        prompt = new CustomQuestionPrompt(this, "question question!",
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(VideoHorizontalActivity.this, "cancel button clicked", Toast.LENGTH_SHORT).show();
-                        prompt.dismiss();
-                    }
-                },
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(VideoHorizontalActivity.this, "submit button clicked", Toast.LENGTH_SHORT).show();
-                        prompt.dismiss();
-                    }
-                });
-
-        prompt.show();
     }
 
     public void videoPause() {
@@ -262,19 +242,26 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     }
 
     public void updateFeedback() {
-        int current = videoView.getCurrentPosition();
-        ArrayList<Feedback> feedbacks = feedbackManager.getFeedbacksAtTime(current);
-        if (feedbackList.toString().compareTo(feedbacks.toString()) != 0) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int current = videoView.getCurrentPosition();
+                        ArrayList<Feedback> feedbacks = feedbackManager.getFeedbacksAtTime(current);
+                        feedbackList.clear();
 
-            feedbackList.clear();
+                        Iterator<Feedback> iter = feedbacks.iterator();
+                        while (iter.hasNext()) {
+                            feedbackList.add(iter.next());
+                        }
 
-            Iterator<Feedback> iter = feedbacks.iterator();
-            while (iter.hasNext()) {
-                feedbackList.add(iter.next());
+                        feedbackListAdapter.notifyDataSetChanged();
+                    }
+                });
             }
-
-            feedbackListAdapter.notifyDataSetChanged();
-        }
+        }).run();
     }
 
     public void addFeedback(Feedback feedback) {
@@ -316,7 +303,8 @@ public class VideoHorizontalActivity extends AppCompatActivity {
             progressBar.setProgress((current * 10000) / duration);
             Log.d("progress", "current progress : " + progressBar.getProgress());
 
-            updateFeedback();
+            if (!areSameFeedbackLists(feedbackList, feedbackManager.getFeedbacksAtTime(current)))
+                updateFeedback();
             promptManager.checkPrompt(current);
             playTimeTextView.setText(milisecToMinSec(current) + " / " + milisecToMinSec(duration));
 
@@ -335,7 +323,9 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 10000) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
-        updateFeedback();
+        if (!areSameFeedbackLists(feedbackList, feedbackManager.getFeedbacksAtTime(videoView.getCurrentPosition())))
+            updateFeedback();
+
         playTimeTextView.setText(milisecToMinSec((int)(videoView.getDuration() * (x / width))) + " / " + milisecToMinSec(videoView.getDuration()));
     }
 
@@ -353,7 +343,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                 v = li.inflate(R.layout.list_item_feedback_list, null);
 
             TextView feedbackTextView = (TextView) v.findViewById(R.id.feedback_text);
-            feedbackTextView.setText(getItem(position).toString());
+            feedbackTextView.setText(getItem(position).getFeedbackText());
 
             final LinearLayout feedbackReplyLayout = (LinearLayout) v.findViewById(R.id.feedback_reply_layout);
 
@@ -384,6 +374,14 @@ public class VideoHorizontalActivity extends AppCompatActivity {
             });
 
             final EditText feedbackReplyInput = (EditText) v.findViewById(R.id.feedback_reply_input);
+            feedbackReplyInput.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_UP)
+                        videoPause();
+                    return false;
+                }
+            });
             feedbackReplyInput.setOnKeyListener(new View.OnKeyListener() {
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -402,5 +400,18 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
             return v;
         }
+    }
+
+    private boolean areSameFeedbackLists(ArrayList<Feedback> l1, ArrayList<Feedback> l2) {
+        if (l1.size() != l2.size()) return false;
+
+        Iterator<Feedback> iter1 = l1.iterator();
+        Iterator<Feedback> iter2 = l2.iterator();
+
+        while (iter1.hasNext()) {
+            if (iter1.next().toString().compareTo(iter2.next().toString()) != 0) return false;
+        }
+
+        return true;
     }
 }
