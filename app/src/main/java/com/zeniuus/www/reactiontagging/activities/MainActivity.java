@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
     static final int MY_PERMISSIONS_REQUEST_INTERNET = 0;
     static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 //    public static final String SERVER_URL = "http://emma.kaist.ac.kr:3000";
-    public static final String SERVER_URL = "http://192.168.1.144:3000";
+    public static final String SERVER_URL = "http://192.168.0.149:3000";
 //    public static final String SERVER_URL = "http://143.248.197.93:3000";
 //    public static final String SERVER_URL = "http://143.248.178.11:3000";
 
