@@ -75,7 +75,7 @@ public class CustomQuestionPrompt extends Dialog {
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "cancel button clicked", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context, "cancel button clicked", Toast.LENGTH_SHORT).show();
                 dismiss();
                 ((VideoHorizontalActivity) context).videoStart();
             }
@@ -109,7 +109,7 @@ public class CustomQuestionPrompt extends Dialog {
                     e.printStackTrace();
                 }
 
-                Toast.makeText(context, "submit button clicked", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Thanks for your answer!", Toast.LENGTH_SHORT).show();
                 dismiss();
                 ((VideoHorizontalActivity) context).videoStart();
             }

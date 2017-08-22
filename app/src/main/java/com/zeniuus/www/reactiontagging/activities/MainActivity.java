@@ -23,7 +23,11 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.zeniuus.www.reactiontagging.R;
+import com.zeniuus.www.reactiontagging.networks.HttpRequestHandler;
+import com.zeniuus.www.reactiontagging.services.MyFirebaseInstanceIDService;
+import com.zeniuus.www.reactiontagging.services.MyFirebaseMessagingService;
 
 import org.json.JSONArray;
 import org.w3c.dom.Text;
@@ -59,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
     static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 //    public static final String SERVER_URL = "http://emma.kaist.ac.kr:3000";
     public static final String SERVER_URL = "http://192.168.0.149:3000";
-//    public static final String SERVER_URL = "http://143.248.197.93:3000";
-//    public static final String SERVER_URL = "http://143.248.178.11:3000";
+//    public static final String SERVER_URL = "http://143.248.197.24:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,11 +82,12 @@ public class MainActivity extends AppCompatActivity {
                 if (isFileExisting(videoName)) {
                     Log.d("flow", "flow if");
                     Intent intent = new Intent(MainActivity.this, VideoHorizontalActivity.class);
-                    intent.putExtra("video name", videoName);
+                    intent.putExtra("videoName", videoName);
                     intent.putExtra("userId", userId);
+                    intent.putExtra("from", "MainActivity");
                     startActivity(intent);
                 } else {
-                    Log.d("flow", "flow else / video name: " + videoName);
+                    Log.d("flow", "flow else / videoName: " + videoName);
                     new DownloadVideo().execute(videoName);
                 }
             }
@@ -97,8 +101,9 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 downloadingLayout.setVisibility(View.INVISIBLE);
                 Intent videoIntent = new Intent(MainActivity.this, VideoHorizontalActivity.class);
-                videoIntent.putExtra("video name", downloadingVideoName);
+                videoIntent.putExtra("videoName", downloadingVideoName);
                 videoIntent.putExtra("userId", userId);
+                intent.putExtra("from", "MainActivity");
                 startActivity(videoIntent);
             }
         };
@@ -106,6 +111,15 @@ public class MainActivity extends AppCompatActivity {
 
         downloadingText = (TextView) findViewById(R.id.downloading_text);
 
+        Intent tokenService = new Intent(MainActivity.this, MyFirebaseInstanceIDService.class);
+        Intent messagingService = new Intent(MainActivity.this, MyFirebaseMessagingService.class);
+        startService(tokenService);
+        startService(messagingService);
+
+        String token = FirebaseInstanceId.getInstance().getToken();
+        String result = new HttpRequestHandler(
+                "POST", MainActivity.SERVER_URL + "/token_refreshed/" + userId, token).doHttpRequest();
+        Log.d("MainActivity", result);
     }
 
     public void requestPermissionsForApp() {

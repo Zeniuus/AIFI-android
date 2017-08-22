@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "122370598891",
+    "firebase_url": "https://reactiontagging.firebaseio.com",
+    "project_id": "reactiontagging",
+    "storage_bucket": "reactiontagging.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122370598891:android:ab3ac2d3865b3d1b",
+        "android_client_info": {
+          "package_name": "com.zeniuus.www.reactiontagging"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "122370598891-ahdr39duhrnbb494hqnp68eu2fvvpi7r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zeniuus.www.reactiontagging",
+            "certificate_hash": "3e60905acc0643448b438a4870b10794913b6bb2"
+          }
+        },
+        {
+          "client_id": "122370598891-c8su4svkkhirifpbpnp2ooo2navqaess.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsYmbExZ2kei6kLG8ZsfMvgwhYV50IEHQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "122370598891-c8su4svkkhirifpbpnp2ooo2navqaess.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -21,9 +21,10 @@
             android:id="@+id/expand_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
             android:textSize="15sp"
             android:textColor="#ffffff"
-            android:text="&gt;"/>
+            android:text="\u02c5"/>
     </LinearLayout>
     <View
         android:layout_width="match_parent"
@@ -53,6 +54,6 @@
             android:layout_weight="0"
             android:background="#ffffff"
             android:textSize="13sp"
-            android:hint="Reply..." />
+            android:hint="Comment..." />
     </LinearLayout>
 </LinearLayout>
