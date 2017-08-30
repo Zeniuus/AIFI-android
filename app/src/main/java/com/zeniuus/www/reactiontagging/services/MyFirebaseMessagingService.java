@@ -55,6 +55,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra("userId", data.get("userId"));
         intent.putExtra("videoName", data.get("videoName"));
         intent.putExtra("from", "notification");
+        intent.putExtra("startTime", data.get("startTime"));
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
