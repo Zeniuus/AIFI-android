@@ -1,4 +1,4 @@
-package com.zeniuus.www.reactiontagging.helpers;
+package com.zeniuus.www.reactiontagging.managers;
 
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -25,7 +25,7 @@ import static java.lang.Thread.sleep;
  * Created by zeniuus on 2017. 8. 30..
  */
 
-public class PlaceLogger {
+public class LogManager {
     static final String TAG = "LogManager";
     Context context;
     String userId, videoName;
@@ -35,7 +35,7 @@ public class PlaceLogger {
     LocationManager locationManager;
     LocationListener locationListener;
 
-    public PlaceLogger(Context context, String userId, String videoName) {
+    public LogManager(Context context, String userId, String videoName) {
         this.context = context;
         this.userId = userId;
         this.videoName = videoName;

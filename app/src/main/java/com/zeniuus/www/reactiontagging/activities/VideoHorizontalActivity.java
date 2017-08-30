@@ -230,8 +230,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        videoLogger = new VideoLogger();
-        videoLogger.execute();
         placeLogger = new PlaceLogger(this, userId, videoName);
         placeLogger.execute();
     }
@@ -239,7 +237,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        videoLogger.cancel(true);
         placeLogger.cancel();
     }
 
