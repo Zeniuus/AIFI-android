@@ -28,8 +28,8 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.zeniuus.www.reactiontagging.R;
-import com.zeniuus.www.reactiontagging.helpers.PlaceLogger;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
+import com.zeniuus.www.reactiontagging.managers.LogManager;
 import com.zeniuus.www.reactiontagging.managers.PromptManager;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
 
@@ -69,12 +69,10 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
     FeedbackManager feedbackManager;
     PromptManager promptManager;
-    PlaceLogger placeLogger;
+    LogManager logManager;
 
     String videoName;
     String userId;
-
-    VideoLogger videoLogger;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,7 +117,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
             public void onPrepared(MediaPlayer mp) {
                 if (getIntent().getStringExtra("from").compareTo("notification") == 0) {
                     videoView.seekTo(Integer.parseInt(getIntent().getStringExtra("startTime")));
-                    placeLogger.setVideoTime(videoView.getCurrentPosition());
+                    logManager.setVideoTime(videoView.getCurrentPosition());
                 }
                 playTimeTextView.setText(milisecToMinSec(videoView.getCurrentPosition()) + " / " + milisecToMinSec(videoView.getDuration()));
                 progressBar.setProgress(videoView.getCurrentPosition() * 5000 / videoView.getDuration());
@@ -230,14 +228,14 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        placeLogger = new PlaceLogger(this, userId, videoName);
-        placeLogger.execute();
+        logManager = new LogManager(this, userId, videoName);
+        logManager.execute();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        placeLogger.cancel();
+        logManager.cancel();
     }
 
     public void videoPause() {
@@ -339,7 +337,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                 updateFeedback();
             promptManager.checkPrompt(current);
             playTimeTextView.setText(milisecToMinSec(current) + " / " + milisecToMinSec(duration));
-            placeLogger.setVideoTime(current);
+            logManager.setVideoTime(current);
 
             if (!videoView.isPlaying() || progressBar.getProgress() >= 5000)
                 isProgressRunning = false;
@@ -356,7 +354,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 5000) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
-        placeLogger.setVideoTime(videoView.getCurrentPosition());
+        logManager.setVideoTime(videoView.getCurrentPosition());
         if (!areSameFeedbackLists(feedbackList, feedbackManager.getFeedbacksAtTime(videoView.getCurrentPosition())))
             updateFeedback();
 
