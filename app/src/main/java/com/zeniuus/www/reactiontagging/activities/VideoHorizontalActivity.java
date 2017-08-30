@@ -2,6 +2,7 @@ package com.zeniuus.www.reactiontagging.activities;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,6 +28,7 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.zeniuus.www.reactiontagging.R;
+import com.zeniuus.www.reactiontagging.helpers.PlaceLogger;
 import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
 import com.zeniuus.www.reactiontagging.managers.PromptManager;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
@@ -67,9 +69,12 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
     FeedbackManager feedbackManager;
     PromptManager promptManager;
+    PlaceLogger placeLogger;
 
     String videoName;
     String userId;
+
+    VideoLogger videoLogger;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -108,11 +113,18 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                 return true;
             }
         });
-        Log.d("data", getIntent().getStringExtra("from"));
-        if (getIntent().getStringExtra("from").compareTo("notification") == 0) {
-            Log.d("flow check", "notification");
-            videoView.seekTo(getIntent().getIntExtra("time", 0));
-        }
+
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if (getIntent().getStringExtra("from").compareTo("notification") == 0) {
+                    videoView.seekTo(Integer.parseInt(getIntent().getStringExtra("startTime")));
+                    placeLogger.setVideoTime(videoView.getCurrentPosition());
+                }
+                playTimeTextView.setText(milisecToMinSec(videoView.getCurrentPosition()) + " / " + milisecToMinSec(videoView.getDuration()));
+                progressBar.setProgress(videoView.getCurrentPosition() * 5000 / videoView.getDuration());
+            }
+        });
 
         progressLayout = (LinearLayout) findViewById(R.id.progress_layout);
         progressLayout.setOnTouchListener(new View.OnTouchListener() {
@@ -135,7 +147,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
                     promptManager.clearShownStates(videoView.getCurrentPosition());
                     videoStart();
-                    new ProgressController().execute();
                 }
                 return true;
             }
@@ -216,6 +227,22 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         feedbackListView.setAdapter(feedbackListAdapter);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        videoLogger = new VideoLogger();
+        videoLogger.execute();
+        placeLogger = new PlaceLogger(this, userId, videoName);
+        placeLogger.execute();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        videoLogger.cancel(true);
+        placeLogger.cancel();
+    }
+
     public void videoPause() {
         playPauseIconView.setImageResource(R.drawable.ic_play);
         playPauseIconView.setTag(R.drawable.ic_play);
@@ -226,6 +253,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         playPauseIconView.setImageResource(R.drawable.ic_pause);
         playPauseIconView.setTag(R.drawable.ic_pause);
         videoView.start();
+        Log.d("videoStart", "videoStart call");
         new ProgressController().execute();
     }
 
@@ -258,6 +286,27 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         feedbackListAdapter.notifyDataSetChanged();
     }
 
+    private class VideoLogger extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            do {
+                publishProgress();
+
+                try {
+                    sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } while (true);
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... params) {
+
+            // TODO: collect log and send to the server
+        }
+    }
+
     private class ProgressController extends AsyncTask<Void, Void, Void> {
         int duration = 0;
         int current = 0;
@@ -270,6 +319,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
         @Override
         public Void doInBackground(Void... params) {
+            Log.d("flow check", "Progress Controller executed");
             do {
                 publishProgress();
 
@@ -286,15 +336,13 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         @Override
         public void onProgressUpdate(Void... params) {
             current = videoView.getCurrentPosition();
-            Log.d("progress", "current : " + current);
-            Log.d("progress", "duration : " + duration);
+            Log.d("Progress Controller", "current: " + current);
             progressBar.setProgress((current * 5000) / duration);
-            Log.d("progress", "current progress : " + progressBar.getProgress());
-
             if (!areSameFeedbackLists(feedbackList, feedbackManager.getFeedbacksAtTime(current)))
                 updateFeedback();
             promptManager.checkPrompt(current);
             playTimeTextView.setText(milisecToMinSec(current) + " / " + milisecToMinSec(duration));
+            placeLogger.setVideoTime(current);
 
             if (!videoView.isPlaying() || progressBar.getProgress() >= 5000)
                 isProgressRunning = false;
@@ -311,6 +359,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         float x = event.getX();
         progressBar.setProgress((int)((x * 5000) / width));
         videoView.seekTo((int)(videoView.getDuration() * (x / width)));
+        placeLogger.setVideoTime(videoView.getCurrentPosition());
         if (!areSameFeedbackLists(feedbackList, feedbackManager.getFeedbacksAtTime(videoView.getCurrentPosition())))
             updateFeedback();
 

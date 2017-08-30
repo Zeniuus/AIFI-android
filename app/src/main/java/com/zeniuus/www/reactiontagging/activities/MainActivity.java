@@ -61,9 +61,10 @@ public class MainActivity extends AppCompatActivity {
 
     static final int MY_PERMISSIONS_REQUEST_INTERNET = 0;
     static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 2;
 //    public static final String SERVER_URL = "http://emma.kaist.ac.kr:3000";
-    public static final String SERVER_URL = "http://192.168.0.149:3000";
-//    public static final String SERVER_URL = "http://143.248.197.24:3000";
+//    public static final String SERVER_URL = "http://192.168.0.149:3000";
+    public static final String SERVER_URL = "http://143.248.197.134:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,9 +129,16 @@ public class MainActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[] { Manifest.permission.INTERNET, Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                    new String[] {
+                            Manifest.permission.INTERNET,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    },
                     MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         } else {
             new GetVideoList().execute();
@@ -146,6 +154,9 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissionsForApp();
             }
             case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+                requestPermissionsForApp();
+            }
+            case MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
                 requestPermissionsForApp();
             }
         }
