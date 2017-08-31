@@ -314,7 +314,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
         @Override
         public Void doInBackground(Void... params) {
-            Log.d("flow check", "Progress Controller executed");
             do {
                 publishProgress();
 
@@ -331,7 +330,6 @@ public class VideoHorizontalActivity extends AppCompatActivity {
         @Override
         public void onProgressUpdate(Void... params) {
             current = videoView.getCurrentPosition();
-            Log.d("Progress Controller", "current: " + current);
             progressBar.setProgress((current * 5000) / duration);
             if (!areSameFeedbackLists(feedbackList, feedbackManager.getFeedbacksAtTime(current)))
                 updateFeedback();

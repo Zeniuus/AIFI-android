@@ -42,7 +42,6 @@
         <activity android:name=".activities.VideoHorizontalActivity"
             android:screenOrientation="landscape">
         </activity>
-        <activity android:name=".activities.ResponseActivity" />
 
         <service
             android:name=".services.MyFirebaseMessagingService">

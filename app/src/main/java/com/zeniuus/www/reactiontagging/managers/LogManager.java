@@ -102,16 +102,16 @@ public class LogManager {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.accumulate("userId", userId);
+            jsonObject.accumulate("date", java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime()));
             jsonObject.accumulate("videoName", videoName);
+            jsonObject.accumulate("videoTime", Integer.toString(videoTime));
             jsonObject.accumulate("latitude", mLocation.getLatitude());
             jsonObject.accumulate("longitude", mLocation.getLongitude());
-            jsonObject.accumulate("date", java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime()));
-            jsonObject.accumulate("videoTime", Integer.toString(videoTime));
             Log.d(TAG, jsonObject.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
-//        String result = new HttpRequestHandler("POST", MainActivity.SERVER_URL + "/log", jsonObject.toString()).doHttpRequest();
-//        Log.d(TAG, result);
+        String result = new HttpRequestHandler("POST", MainActivity.SERVER_URL + "/log", jsonObject.toString()).doHttpRequest();
+        Log.d(TAG, result);
     }
 }

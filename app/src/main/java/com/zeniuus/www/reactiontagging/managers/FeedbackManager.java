@@ -46,7 +46,6 @@ public class FeedbackManager {
             Log.d("exception", e.toString());
         }
 
-//        final VideoActivity videoActivity = (VideoActivity) context;
         final VideoHorizontalActivity videoHorizontalActivity = (VideoHorizontalActivity) context;
 
         mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
@@ -74,8 +73,6 @@ public class FeedbackManager {
                     );
                     feedbacks.add(feedback);
                     Collections.sort(feedbacks, mComparator);
-//                    videoActivity.addFeedback(feedback);
-//                    videoHorizontalActivity.addFeedback(feedback);
                     videoHorizontalActivity.updateFeedback();
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
@@ -128,15 +125,10 @@ public class FeedbackManager {
                             temp.giveThreadFeedback(
                                     ((JSONObject) args[0]).getString("threadUserId"),
                                     ((JSONObject) args[0]).getString("threadFeedback"));
-
-//                            videoActivity.updateThreadFeedback(temp);
-//                            videoHorizontalActivity.updateThreadFeedback(temp);
                             videoHorizontalActivity.updateFeedback();
                             break;
                         }
                     }
-
-
                 } catch (Exception e) {
                     Log.d("exception", e.toString());
                 }
@@ -145,7 +137,7 @@ public class FeedbackManager {
             @Override
             public void call(Object... args) {
                 Iterator<Feedback> iter = feedbacks.iterator();
-                Log.d("data log", "data from server: " + ((JSONObject) args[0]).toString());
+                Log.d("data log", "data from server: " + args[0].toString());
 
                 try {
                     Feedback feedback = new Feedback(
@@ -190,6 +182,7 @@ public class FeedbackManager {
                         jsonObject.getJSONArray("thread"));
                 feedbacks.add(feedback);
             }
+            Collections.sort(feedbacks, mComparator);
         } catch (Exception e) {
             Log.d("exception", e.toString());
         }
@@ -215,10 +208,6 @@ public class FeedbackManager {
         if (feedback.compareTo("") == 0)
             return -2;
 
-//        feedbacks.add(new Feedback(startTime, endTime, feedback));
-//        Log.d("feedback", "feedback well inserted");
-//        Collections.sort(feedbacks, mComparator);
-
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.accumulate("userId", userId);
@@ -242,7 +231,7 @@ public class FeedbackManager {
 
         while (iter.hasNext()) {
             Feedback feedback = iter.next();
-            if (feedback.getStartTime() <= time && feedback.getEndTime() >= time)
+            if (feedback.getStartTime() <= time)
                 currFeedbacks.add(feedback);
         }
 
@@ -356,9 +345,9 @@ public class FeedbackManager {
     public final static Comparator<Feedback> mComparator = new Comparator<Feedback>() {
         @Override
         public int compare(Feedback o1, Feedback o2) {
-            if (o1.getStartTime() < o2.getStartTime()) return -1;
+            if (o1.getStartTime() < o2.getStartTime()) return 1;
             else if (o1.getStartTime() == o2.getStartTime()) return 0;
-            else return 1;
+            else return -1;
         }
     };
 

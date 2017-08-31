@@ -10,7 +10,6 @@ import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.zeniuus.www.reactiontagging.R;
-import com.zeniuus.www.reactiontagging.activities.ResponseActivity;
 import com.zeniuus.www.reactiontagging.activities.VideoHorizontalActivity;
 
 import java.util.Map;
