@@ -155,15 +155,6 @@ public class VideoActivity extends AppCompatActivity {
                 return true;
             }
         });
-//        videoView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//            @Override
-//            public void onGlobalLayout() {
-//                RelativeLayout videoLayout = (RelativeLayout) findViewById(R.id.video_layout);
-//                videoLayout.getLayoutParams().width = videoView.getWidth();
-//                videoLayout.getLayoutParams().height = videoView.getHeight();
-//                Log.d("size", "videoView width: " + videoView.getWidth());
-//            }
-//        });
 
         pauseText = (TextView) findViewById(R.id.pause_text);
 

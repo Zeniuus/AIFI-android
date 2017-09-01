@@ -372,8 +372,14 @@ public class VideoHorizontalActivity extends AppCompatActivity {
             if (v == null)
                 v = li.inflate(R.layout.list_item_feedback_list, null);
 
+            LinearLayout feedbackListItemLayout = (LinearLayout) v.findViewById(R.id.feedback_list_item_layout);
+//            if (getItem(position).isQuestion())
+//                feedbackListItemLayout.setBackground(getResources().getDrawable(R.drawable.question_border, getTheme()));
+
             TextView feedbackTextView = (TextView) v.findViewById(R.id.feedback_text);
             feedbackTextView.setText(getItem(position).getFeedbackText());
+            if (getItem(position).isQuestion())
+                feedbackTextView.setText(getItem(position).getFeedbackText());
 
             final LinearLayout feedbackReplyLayout = (LinearLayout) v.findViewById(R.id.feedback_reply_layout);
 
@@ -417,6 +423,7 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                        Log.d("input", "clicked");
                         String reply;
                         if ((reply = feedbackReplyInput.getText().toString()).compareTo("") == 0)
                             Toast.makeText(VideoHorizontalActivity.this, "Please give a richer feedback", Toast.LENGTH_SHORT).show();

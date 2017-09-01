@@ -65,6 +65,7 @@ public class FeedbackManager {
                 try {
                     Feedback feedback = new Feedback(
                             ((JSONObject) args[0]).getString("userId"),
+                            false,
                             ((JSONObject) args[0]).getInt("startTime") + "",
                             ((JSONObject) args[0]).getInt("endTime") + "",
                             ((JSONObject) args[0]).getString("feedback"),
@@ -86,11 +87,12 @@ public class FeedbackManager {
                 try {
                     Feedback feedback = new Feedback(
                             ((JSONObject) args[0]).getString("userId"),
+                            false,
                             ((JSONObject) args[0]).getInt("startTime") + "",
                             ((JSONObject) args[0]).getInt("endTime") + "",
                             ((JSONObject) args[0]).getString("feedback"),
                             ((JSONObject) args[0]).getJSONArray("like"),
-                            null
+                            new JSONArray()
                     );
 
                     while (iter.hasNext()) {
@@ -112,11 +114,12 @@ public class FeedbackManager {
                 try {
                     Feedback feedback = new Feedback(
                             ((JSONObject) args[0]).getString("userId"),
+                            false,
                             ((JSONObject) args[0]).getInt("startTime") + "",
                             ((JSONObject) args[0]).getInt("endTime") + "",
                             ((JSONObject) args[0]).getString("feedback"),
                             ((JSONObject) args[0]).getJSONArray("like"),
-                            null
+                            new JSONArray()
                     );
 
                     while (iter.hasNext()) {
@@ -125,6 +128,38 @@ public class FeedbackManager {
                             temp.giveThreadFeedback(
                                     ((JSONObject) args[0]).getString("threadUserId"),
                                     ((JSONObject) args[0]).getString("threadFeedback"));
+                            videoHorizontalActivity.updateFeedback();
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d("exception", e.toString());
+                }
+            }
+        }).on("question answer addition", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Log.d("socket", "question answer addition");
+                Iterator<Feedback> iter = feedbacks.iterator();
+
+                try {
+                    Feedback feedback = new Feedback(
+                            ((JSONObject) args[0]).getString("userId"),
+                            true,
+                            ((JSONObject) args[0]).getInt("startTime") + "",
+                            ((JSONObject) args[0]).getInt("startTime") + 5000 + "",
+                            ((JSONObject) args[0]).getString("feedback"),
+                            ((JSONObject) args[0]).getString("question"),
+                            new JSONArray()
+                    );
+
+                    while (iter.hasNext()) {
+                        Feedback temp = iter.next();
+                        if (isSame(temp, feedback)) {
+                            temp.giveThreadFeedback(
+                                    ((JSONObject) args[0]).getString("userId"),
+                                    ((JSONObject) args[0]).getString("answer"));
+                            Log.d("data", temp.getFeedbackText());
                             videoHorizontalActivity.updateFeedback();
                             break;
                         }
@@ -142,6 +177,7 @@ public class FeedbackManager {
                 try {
                     Feedback feedback = new Feedback(
                             ((JSONObject) args[0]).getString("userId"),
+                            false,
                             ((JSONObject) args[0]).getInt("startTime") + "",
                             ((JSONObject) args[0]).getInt("endTime") + "",
                             ((JSONObject) args[0]).getString("feedback"),
@@ -175,6 +211,7 @@ public class FeedbackManager {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 Feedback feedback = new Feedback(
                         jsonObject.getString("userId"),
+                        false,
                         jsonObject.getInt("startTime") + "",
                         jsonObject.getInt("endTime") + "",
                         jsonObject.getString("feedback"),
@@ -182,10 +219,37 @@ public class FeedbackManager {
                         jsonObject.getJSONArray("thread"));
                 feedbacks.add(feedback);
             }
-            Collections.sort(feedbacks, mComparator);
         } catch (Exception e) {
             Log.d("exception", e.toString());
         }
+
+        result = new HttpRequestHandler(
+                "GET",
+                MainActivity.SERVER_URL + "/get_question/" + videoName,
+                "")
+                .doHttpRequest();
+        Log.d("server", "get question result: " + result);
+        try {
+            JSONArray jsonArray = new JSONObject(result).getJSONArray("question");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                if (jsonObject.getString("userId").compareTo(userId) == 0) {
+                    Feedback feedback = new Feedback(
+                            jsonObject.getString("userId"),
+                            true,
+                            jsonObject.getInt("startTime") + "",
+                            jsonObject.getInt("startTime") + 5000 + "",
+                            jsonObject.getString("feedback"),
+                            jsonObject.getString("question"),
+                            jsonObject.getJSONArray("answers"));
+                    feedbacks.add(feedback);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Collections.sort(feedbacks, mComparator);
     }
 
     public int getSize() {
@@ -305,27 +369,47 @@ public class FeedbackManager {
     }
 
     public void giveThreadFeedback(Feedback feedback, String threadFeedback) {
+        Log.d("feedback", feedback.getFeedbackText());
         Iterator<Feedback> iter = feedbacks.iterator();
         while (iter.hasNext()) {
             Feedback temp = iter.next();
             if (isSame(temp, feedback)) {
-                try {
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.accumulate("userId", feedback.getUserId());
-                    jsonObject.accumulate("startTime", feedback.getStartTime());
-                    jsonObject.accumulate("endTime", feedback.getEndTime());
-                    jsonObject.accumulate("feedback", feedback.getFeedback());
-                    jsonObject.accumulate("like", feedback.getLike());
-                    jsonObject.accumulate("threadUserId", userId);
-                    jsonObject.accumulate("threadFeedback", threadFeedback);
+                if (!feedback.isQuestion()) {
+                    try {
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.accumulate("userId", feedback.getUserId());
+                        jsonObject.accumulate("startTime", feedback.getStartTime());
+                        jsonObject.accumulate("endTime", feedback.getEndTime());
+                        jsonObject.accumulate("feedback", feedback.getFeedback());
+                        jsonObject.accumulate("like", feedback.getLike());
+                        jsonObject.accumulate("threadUserId", userId);
+                        jsonObject.accumulate("threadFeedback", threadFeedback);
 
-                    String result = new HttpRequestHandler
-                            ("POST", MainActivity.SERVER_URL + "/new_thread_feedback/" + videoName, jsonObject.toString())
-                            .doHttpRequest();
-                    Log.d("server", "new thread feedback result: " + result);
-                    Toast.makeText(context, "new thread feedback: " + threadFeedback, Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    Log.d("exception", e.toString());
+                        String result = new HttpRequestHandler
+                                ("POST", MainActivity.SERVER_URL + "/new_thread_feedback/" + videoName, jsonObject.toString())
+                                .doHttpRequest();
+                        Log.d("server", "new thread feedback result: " + result);
+                        Toast.makeText(context, "new thread feedback: " + threadFeedback, Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.d("exception", e.toString());
+                    }
+                } else {
+                    try {
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.accumulate("userId", feedback.getUserId());
+                        jsonObject.accumulate("startTime", feedback.getStartTime());
+                        jsonObject.accumulate("feedback", feedback.getFeedback());
+                        jsonObject.accumulate("question", feedback.getQuestion());
+                        jsonObject.accumulate("answer", threadFeedback);
+
+                        String result = new HttpRequestHandler
+                                ("POST", MainActivity.SERVER_URL + "/new_question_answer/" + videoName, jsonObject.toString())
+                                .doHttpRequest();
+                        Log.d("server", "new answer to presenter's question result: " + result);
+                        Toast.makeText(context, "new answer to presenter's question: " + threadFeedback, Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.d("exception", e.toString());
+                    }
                 }
             }
         }
@@ -353,10 +437,12 @@ public class FeedbackManager {
 
     private boolean isSame(Feedback feedback1, Feedback feedback2) {
         if (feedback1.getUserId().compareTo(feedback2.getUserId()) == 0
+                && feedback1.isQuestion() == feedback2.isQuestion()
                 && feedback1.getStartTime() == feedback2.getStartTime()
                 && feedback1.getEndTime() == feedback2.getEndTime()
                 && feedback1.getFeedback().compareTo(feedback2.getFeedback()) == 0
-                && feedback1.getLike().toString().compareTo(feedback2.getLike().toString()) == 0)
+                && feedback1.getLike().toString().compareTo(feedback2.getLike().toString()) == 0
+                && feedback1.getQuestion().compareTo(feedback2.getQuestion()) == 0)
             return true;
         else return false;
     }

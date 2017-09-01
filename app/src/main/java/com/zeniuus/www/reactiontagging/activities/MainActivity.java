@@ -63,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
     static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
     static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 2;
 //    public static final String SERVER_URL = "http://emma.kaist.ac.kr:3000";
-//    public static final String SERVER_URL = "http://192.168.0.149:3000";
-    public static final String SERVER_URL = "http://143.248.197.87:3000";
+    public static final String SERVER_URL = "http://192.168.0.149:3000";
+//    public static final String SERVER_URL = "http://143.248.197.87:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent videoIntent = new Intent(MainActivity.this, VideoHorizontalActivity.class);
                 videoIntent.putExtra("videoName", downloadingVideoName);
                 videoIntent.putExtra("userId", userId);
-                intent.putExtra("from", "MainActivity");
+                videoIntent.putExtra("from", "MainActivity");
                 startActivity(videoIntent);
             }
         };
@@ -121,6 +121,12 @@ public class MainActivity extends AppCompatActivity {
         String result = new HttpRequestHandler(
                 "POST", MainActivity.SERVER_URL + "/token_refreshed/" + userId, token).doHttpRequest();
         Log.d("MainActivity", result);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(onComplete);
     }
 
     public void requestPermissionsForApp() {
