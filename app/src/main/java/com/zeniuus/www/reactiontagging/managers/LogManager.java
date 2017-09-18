@@ -76,7 +76,8 @@ public class LogManager {
                     if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         while (true) {
                             mLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                            sendLog();
+                            if (mLocation != null)
+                                sendLog();
 
                             try {
                                 sleep(10000);
@@ -93,7 +94,6 @@ public class LogManager {
     public void cancel() {
         locationManager.removeUpdates(locationListener);
         logFlag = false;
-        sendLog();
     }
 
     public void setVideoTime(int videoTime) { this.videoTime = videoTime; }

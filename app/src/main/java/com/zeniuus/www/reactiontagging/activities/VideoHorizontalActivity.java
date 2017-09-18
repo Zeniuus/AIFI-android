@@ -32,6 +32,7 @@ import com.zeniuus.www.reactiontagging.managers.FeedbackManager;
 import com.zeniuus.www.reactiontagging.managers.LogManager;
 import com.zeniuus.www.reactiontagging.managers.PromptManager;
 import com.zeniuus.www.reactiontagging.objects.Feedback;
+import com.zeniuus.www.reactiontagging.views.DrawingView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,6 +60,8 @@ public class VideoHorizontalActivity extends AppCompatActivity {
     TextView playTimeTextView;
     EditText myFeedbackInputView;
     Button myFeedbackSubmitBtn;
+    DrawingView regionSelectView;
+    Button regionSelectBtn;
 
     LinearLayout feedbackListLayout;
     TextView feedbackListBtn;
@@ -73,6 +76,8 @@ public class VideoHorizontalActivity extends AppCompatActivity {
 
     String videoName;
     String userId;
+    boolean[] visibility = new boolean[3];
+    float[] regionInfo = new float[4];
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -190,6 +195,45 @@ public class VideoHorizontalActivity extends AppCompatActivity {
                     myFeedbackInputView.setText("");
 //                    softKeyboard.closeSoftKeyboard();
                 }
+            }
+        });
+
+        regionSelectView = (DrawingView) findViewById(R.id.region_select_view);
+        regionSelectView.setVisibility(View.GONE);
+        regionSelectView.setCallback(new DrawingView.Callback() {
+            @Override
+            public void callback(float left, float top, float right, float bottom) {
+                regionSelectView.setDrawFlag(false);
+                regionSelectView.setVisibility(View.GONE);
+
+                regionInfo[0] = left;
+                regionInfo[1] = top;
+                regionInfo[2] = right;
+                regionInfo[3] = bottom;
+                Log.d("region info", left + " / " + top + " / " + right + " / " + bottom);
+
+                titleView.setVisibility(visibility[0] ? View.VISIBLE : View.GONE);
+                feedbackListLayout.setVisibility(visibility[1] ? View.VISIBLE : View.GONE);
+                progressLayout.setVisibility(visibility[2] ? View.VISIBLE : View.GONE);
+            }
+        });
+
+        regionSelectBtn = (Button) findViewById(R.id.region_select_btn);
+        regionSelectBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                visibility[0] = titleView.getVisibility() == View.VISIBLE;
+                visibility[1] = feedbackListLayout.getVisibility() == View.VISIBLE;
+                visibility[2] = progressLayout.getVisibility() == View.VISIBLE;
+
+                titleView.setVisibility(View.GONE);
+                feedbackListLayout.setVisibility(View.GONE);
+                progressLayout.setVisibility(View.GONE);
+
+                regionSelectView.setVisibility(View.VISIBLE);
+                regionSelectView.setDrawFlag(true);
+
+
             }
         });
 
